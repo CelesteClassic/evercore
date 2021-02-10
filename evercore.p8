@@ -3,7 +3,7 @@ version 29
 __lua__
 --~evercore~
 --a celeste classic mod base
---1.7.1 dev
+--3.7.1 dev
 
 --original game by:
 --matt thorson + noel berry
