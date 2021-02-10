@@ -3,7 +3,7 @@ version 29
 __lua__
 --~evercore~
 --a celeste classic mod base
---v3.7 stable
+--1.7.1 dev
 
 --original game by:
 --matt thorson + noel berry
@@ -257,7 +257,7 @@ player={
   draw=function(this)
     -- clamp in screen
     if this.x<-1 or this.x>lvl_pw-7 then
-      this.x=clamp(this.x,-1,lvl_pw-7)
+      this.x=mid(this.x,-1,lvl_pw-7)
       this.spd.x=0
     end
     -- draw player hair and sprite
@@ -284,7 +284,7 @@ function draw_hair(obj,facing)
   for i,h in pairs(obj.hair) do
     h.x+=(last.x-h.x)/1.5
     h.y+=(last.y+0.5-h.y)/1.5
-    circfill(h.x,h.y,clamp(4-i,1,2),8)
+    circfill(h.x,h.y,mid(4-i,1,2),8)
     last=h
   end
 end
@@ -301,8 +301,8 @@ player_spawn={
     this.spr=3
     this.target=this.y
     this.y=min(this.y+48,lvl_ph)
-    cam_x=clamp(this.x,64,lvl_pw-64)
-    cam_y=clamp(this.y,64,lvl_ph-64)
+    cam_x=mid(this.x,64,lvl_pw-64)
+    cam_y=mid(this.y,64,lvl_ph-64)
     this.spd.y=-4
     this.state=0
     this.delay=0
@@ -1191,10 +1191,6 @@ function round(x)
   return flr(x+0.5)
 end
 
-function clamp(val,a,b)
-  return max(a,min(b,val))
-end
-
 function appr(val,target,amount)
   return val>target and max(val-amount,target) or min(val+amount,target)
 end
@@ -1278,11 +1274,11 @@ function move_camera(obj)
 
   if cam_x<64 or cam_x>lvl_pw-64 then
     cam_spdx=0
-    cam_x=clamp(cam_x,64,lvl_pw-64)
+    cam_x=mid(cam_x,64,lvl_pw-64)
   end
   if cam_y<64 or cam_y>lvl_ph-64 then
     cam_spdy=0
-    cam_y=clamp(cam_y,64,lvl_ph-64)
+    cam_y=mid(cam_y,64,lvl_ph-64)
   end
 end
 
