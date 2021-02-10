@@ -1231,10 +1231,9 @@ function spikes_at(x,y,w,h,xspd,yspd)
   end
 end
 -->8
---scrolling level stuff
+--[map metadata]
 
 --level table
---strings follow this format:
 --"x,y,w,h,title"
 levels={
   [0]="-1,-1,1,1",--title screen
@@ -1257,7 +1256,7 @@ function get_data()
   return split(mapdata[lvl_id],",",false)
 end
 
---not using tables to conserve tokens
+--camera globals
 cam_x=0
 cam_y=0
 cam_spdx=0
@@ -1265,13 +1264,13 @@ cam_spdy=0
 cam_gain=0.25
 
 function move_camera(obj)
-  --set camera speed
   cam_spdx=cam_gain*(4+obj.x+0*obj.spd.x-cam_x)
   cam_spdy=cam_gain*(4+obj.y+0*obj.spd.y-cam_y)
 
   cam_x+=cam_spdx
   cam_y+=cam_spdy
 
+  --clamp camera to level boundaries
   if cam_x<64 or cam_x>lvl_pw-64 then
     cam_spdx=0
     cam_x=mid(cam_x,64,lvl_pw-64)
