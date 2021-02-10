@@ -874,7 +874,7 @@ function init_object(type,x,y,tile)
   function obj.move(ox,oy,start)
     for axis in all({"x","y"}) do
       obj.rem[axis]+=axis=="x" and ox or oy
-      local amt=flr(obj.rem[axis]+0.5)
+      local amt=round(obj.rem[axis])
       obj.rem[axis]-=amt
       if obj.solids then
         local step=sign(amt)
