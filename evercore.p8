@@ -6,7 +6,7 @@ __lua__
 --3.7.1 dev
 
 --original game by:
---matt thorson + noel berry
+--maddy thorson + noel berry
 
 --cart by: taco360
 --based on meep's smalleste
@@ -1152,7 +1152,7 @@ function _draw()
   if is_title() then
     sspr(72,32,56,32,36,32)
     ?"🅾️/❎",55,80,5
-    ?"matt thorson",42,96,5
+    ?"maddy thorson",40,96,5
     ?"noel berry",46,102,5
   end
 end
