@@ -1173,7 +1173,7 @@ end
 function draw_ui(draw_x,draw_y)
   rectfill(24+draw_x,58+draw_y,104+draw_x,70+draw_y,0)
   if lvl_title then
-    ?lvl_title,64-#lvl_title*2+draw_x,62,7
+    ?lvl_title,64-#lvl_title*2+draw_x,62+draw_y,7
   else
     local level=lvl_id*100
     ?level.." m",52+(level<1000 and 2 or 0)+draw_x,62+draw_y,7
