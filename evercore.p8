@@ -81,6 +81,7 @@ dead_particles={}
 -- [player entity]
 
 player={
+  layer=2,
   init=function(this)
     this.grace,this.jbuffer=0,0
     this.djump=max_djump
@@ -291,6 +292,7 @@ end
 -- [other entities]
 
 player_spawn={
+  layer=2,
   init=function(this)
     sfx(4)
     this.spr=3
@@ -642,6 +644,7 @@ chest={
 }
 
 platform={
+  layer=0,
   init=function(this)
     this.x-=4
     this.hitbox.w=16
@@ -666,6 +669,7 @@ platform={
 }
 
 message={
+  layer=3,
   init=function(this)
     this.text="-- celeste mountain --#this memorial to those#perished on the climb"
     this.hitbox.x+=4
@@ -1076,10 +1080,21 @@ function _draw()
   -- draw bg terrain
   map(lvl_x,lvl_y,0,0,lvl_w,lvl_h,4)
 
-  -- platforms
+  --set draw layering
+  --0: background layer
+  --1: default layer
+  --2: player layer
+  --3: foreground layer
+  local layers={{},{},{}}
   foreach(objects,function(o)
-    if o.type==platform then
-      draw_object(o)
+    if o.type.layer then
+      if o.type.layer==0 then
+        draw_object(o) --draw below terrain
+      else
+        add(layers[o.type.layer],o) --add object to layer
+      end
+    else
+      add(layers[1],o) --draw below player (default)
     end
   end)
 
@@ -1087,10 +1102,8 @@ function _draw()
   map(lvl_x,lvl_y,0,0,lvl_w,lvl_h,2)
 
   -- draw objects
-  foreach(objects,function(o)
-    if o.type~=platform then
-      draw_object(o)
-    end
+  foreach(layers,function(l)
+    foreach(l,draw_object)
   end)
 
   -- particles
