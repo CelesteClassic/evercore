@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 29
+version 30
 __lua__
 --~evercore~
 --a celeste classic mod base
@@ -944,7 +944,7 @@ function load_level(lvl)
 
   --set level globals
   local tbl=get_lvl()
-  lvl_x,lvl_y,lvl_w,lvl_h,lvl_title=tbl[1],tbl[2],tbl[3]*16,tbl[4]*16,tbl[5]
+  lvl_x,lvl_y,lvl_w,lvl_h,lvl_title=tbl[1]*16,tbl[2]*16,tbl[3]*16,tbl[4]*16,tbl[5]
   lvl_pw=lvl_w*8
   lvl_ph=lvl_h*8
 
@@ -956,19 +956,15 @@ function load_level(lvl)
   end
 
   --chcek for hex mapdata
-  if diff_room and get_data() then
+  if diff_room and mapdata[lvl_id] then
     --replace old rooms with data
-    for i=0,get_lvl()[3]-1 do
-      for j=0,get_lvl()[4]-1 do
-        replace_room(lvl_x+i,lvl_y+j,get_data()[i*tbl[4]+j+1])
-      end
-    end
+    replace_mapdata(lvl_x,lvl_y,lvl_w,lvl_h,mapdata[lvl_id])
   end
 
   -- entities
   for tx=0,lvl_w-1 do
     for ty=0,lvl_h-1 do
-      local tile=mget(lvl_x*16+tx,lvl_y*16+ty)
+      local tile=mget(lvl_x+tx,lvl_y+ty)
       if tiles[tile] then
         init_object(tiles[tile],tx*8,ty*8,tile)
       end
@@ -1061,10 +1057,6 @@ function _draw()
   draw_y=is_title() and 0 or round(cam_y)-64
   camera(draw_x,draw_y)
 
-  --local token saving
-  local xtiles=lvl_x*16
-  local ytiles=lvl_y*16
-
   -- draw bg color
   cls(flash_bg and frames/5 or new_bg and 2 or 0)
 
@@ -1081,7 +1073,7 @@ function _draw()
   end
 
   -- draw bg terrain
-  map(xtiles,ytiles,0,0,lvl_w,lvl_h,4)
+  map(lvl_x,lvl_y,0,0,lvl_w,lvl_h,4)
 
   -- platforms
   foreach(objects,function(o)
@@ -1091,7 +1083,7 @@ function _draw()
   end)
 
   -- draw terrain
-  map(xtiles,ytiles,0,0,lvl_w,lvl_h,2)
+  map(lvl_x,lvl_y,0,0,lvl_w,lvl_h,2)
 
   -- draw objects
   foreach(objects,function(o)
@@ -1200,7 +1192,7 @@ function tile_flag_at(x,y,w,h,flag)
 end
 
 function tile_at(x,y)
-  return mget(lvl_x*16+x,lvl_y*16+y)
+  return mget(lvl_x+x,lvl_y+y)
 end
 
 function spikes_at(x,y,w,h,xspd,yspd)
@@ -1231,15 +1223,11 @@ levels={
 --mapdata table
 --rooms separated by commas
 mapdata={
-  [2]="25252525332b000000000000000000002525252600000000000000000000000025253233001a0000000000000000000025261b1b0000000000000000000000002526000000000000000000000000000025330000000000000000000000000000332b0000000000000000000000000000280000000000000000000000002c000038390000000000000000003d3e3c0000282900002c000000000039212223393a2828293f3c000000003a38313233283828382122233d013f3a382829002a2a282222252525222223282828001600002925252525252532331029290000000000252525252526002a290000000000000025252525252600000000000000000000,0000000000000000000000000024252500000000000000000000000000242525000000000000000000000000003125250000003a0000003900000000000031320000002839003a38393f000000001b1b00000028103a28212223000000000000003e3a3828282831323300000000000000212223292a290000000000000000003a31323300000000160000000000000028102900000000000000000000000000282900000000000000000000000000002900000000000000000000000000000000000000000000000000000000000000000000000000000000000000001111110000000000000000000000111121222200000000000000000000002122252525"
+  [2]="25253233000000243232323232323225252526282828282425323310282828292526282800000030402a2828282828242548262838282831333828292a282867323328390000003700002a3828002a24252526282828282028292a0000002a282828281029000000000000282839002425252628290028206700000000000000282828280016000000162a28282800242525262700002a2029000000000000002a283828000000000000003a282900244825263700000029000000000000003a00282828675800000058682838000031323233200000000000000000002728283a2828282810290000002a28286700003435353611110000000000001130283828282900002a0000000000382a29003a2828283436200000000000002030282810283a00000000000000002800000028283810292a000000000000002a3710282a3829000000000000003a1029000028282828000000000000000000002a282800290000000000004647002a0000002828292a0000000000000000000000282a000000000000003e565700000000002a2a0000000000000000000000002a2800111111201111112122230000001212000000000000000000000000000000290022222222222223244826111111202011112739000017170000001717000000002525482525252624252621222222222223303800000000000000000000000000"
 }
 
 function get_lvl()
   return split(levels[lvl_id])
-end
-
-function get_data()
-  return split(mapdata[lvl_id],",",false)
 end
 
 --camera globals
@@ -1268,12 +1256,12 @@ function move_camera(obj)
 end
 
 --replace mapdata with hex
-function replace_room(x,y,room)
-  for y_=1,32,2 do
-    for x_=1,32,2 do
-      local offset=4096+(y<2 and 4096 or-4096)
-      local hex=sub(room,x_+(y_-1)*16,x_+(y_-1)*16+1)
-      poke(offset+x*16+y*2048+(y_-1)*64+x_/2,"0x"..hex)
+function replace_mapdata(x,y,w,h,data)
+  for y_=1,h*2,2 do
+    for x_=1,w*2,2 do
+      local offset=y_<64 and 8192 or 0
+      local hex=sub(data,x_+(y_-1)*w,x_+(y_-1)*w+1)
+      poke(offset+x+y*128+(y_-1)*64+x_/2,"0x"..hex)
     end
   end
 end
@@ -1288,18 +1276,16 @@ and can be safely removed!
  
 --]]
 
---returns mapdata string of level
---printh(get_room(),"@clip")
-function get_room(x,y)
+--copy mapdata string to clipboard
+function get_mapdata(x,y,w,h)
   local reserve=""
-  local offset=4096+(y<2 and 4096 or 0)
-  y=y%2
-  for y_=1,32,2 do
-    for x_=1,32,2 do
-      reserve=reserve..num2hex(peek(offset+x*16+y*2048+(y_-1)*64+x_/2))
+  for y_=1,h*2,2 do
+    for x_=1,w*2,2 do
+      local offset=y_<64 and 8192 or 0
+      reserve=reserve..num2hex(peek(offset+x+y*128+(y_-1)*64+x_/2))
     end
   end
-  return reserve
+  printh(reserve,"@clip")
 end
 
 --convert mapdata to memory data
