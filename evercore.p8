@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 30
+version 32
 __lua__
 --~evercore~
 --a celeste classic mod base
