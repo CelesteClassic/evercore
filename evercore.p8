@@ -555,7 +555,7 @@ function check_fruit(this)
     hit.djump=max_djump
     sfx_timer=20
     sfx(13)
-    got_fruit[lvl_id]=true
+    add(got_fruit[lvl_id],this.fruit_id)
     init_object(lifeup,this.x,this.y)
     destroy_object(this)
   end
@@ -607,7 +607,7 @@ fake_wall={
 function init_fruit(this,ox,oy)
   sfx_timer=20
   sfx(16)
-  init_object(fruit,this.x+ox,this.y+oy,26)
+  init_object(fruit,this.x+ox,this.y+oy,26).fruit_id=this.fruit_id
   destroy_object(this)
 end
 
@@ -762,8 +762,10 @@ flag={
   init=function(this)
     this.x+=5
     this.score=0
-    for _ in pairs(got_fruit) do
-      this.score+=1
+    for lvl in all(got_fruit) do
+      for f in all(lvl) do
+        this.score+=1
+      end
     end
   end,
   update=function(this)
@@ -776,11 +778,13 @@ flag={
     this.spr=118+frames/5%3
     draw_obj_sprite(this)
     if this.show then
+      camera()
       rectfill(32,2,96,31,0)
       spr(26,55,6)
       ?"x"..this.score,64,9,7
       draw_time(49,16)
       ?"deaths:"..deaths,48,24,7
+      camera(draw_x,draw_y)
     end
   end
 }
@@ -812,8 +816,12 @@ tiles={
 -- [object functions]
 
 function init_object(type,x,y,tile)
-  if type.if_not_fruit and got_fruit[lvl_id] then
-    return
+  local id=nil
+  if type.if_not_fruit then 
+    id=x\8+(y\8)*lvl_w
+    for f in all(got_fruit[lvl_id]) do
+      if f==id then return end
+    end
   end
 
   local obj={
@@ -827,6 +835,7 @@ function init_object(type,x,y,tile)
     hitbox=rectangle(0,0,8,8),
     spd=vector(0,0),
     rem=vector(0,0),
+    fruit_id=id,
   }
 
   function obj.is_solid(ox,oy)
@@ -932,6 +941,9 @@ end
 function load_level(lvl)
   has_dashed=false
   has_key=false
+
+  --set fruit index
+  if not got_fruit[lvl] then got_fruit[lvl]={} end
 
   --remove existing objects
   foreach(objects,destroy_object)
