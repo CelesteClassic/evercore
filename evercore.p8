@@ -3,7 +3,7 @@ version 32
 __lua__
 --~evercore~
 --a celeste classic mod base
---3.7.1 dev
+--1.4.0 dev
 
 --original game by:
 --maddy thorson + noel berry
