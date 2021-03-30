@@ -930,11 +930,12 @@ end
 
 function next_level()
   local next_lvl=lvl_id+1
-  if next_lvl==3 then --wind music
+  if next_lvl==2 then
+    --wind music
     music(30,500,7)
-  elseif next_lvl==2 then
-    music(20,500,7)
   end
+  --old site music
+  --music(20,500,7)
   load_level(next_lvl)
 end
 
