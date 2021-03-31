@@ -502,7 +502,7 @@ smoke={
 }
 
 fruit={
-  if_not_fruit=true,
+  check_fruit=true,
   init=function(this)
     this.start=this.y
     this.off=0
@@ -515,7 +515,7 @@ fruit={
 }
 
 fly_fruit={
-  if_not_fruit=true,
+  check_fruit=true,
   init=function(this)
     this.start=this.y
     this.step=0.5
@@ -584,7 +584,7 @@ lifeup={
 }
 
 fake_wall={
-  if_not_fruit=true,
+  check_fruit=true,
   update=function(this)
     this.hitbox=rectangle(-1,-1,18,18)
     local hit=this.player_here()
@@ -614,7 +614,6 @@ function init_fruit(this,ox,oy)
 end
 
 key={
-  if_not_fruit=true,
   update=function(this)
     local was=flr(this.spr)
     this.spr=flr(9.5+sin(frames/30))
@@ -631,7 +630,7 @@ key={
 }
 
 chest={
-  if_not_fruit=true,
+  check_fruit=true,
   init=function(this)
     this.x-=4
     this.start=this.x
@@ -820,7 +819,7 @@ tiles={
 function init_object(type,x,y,tile)
   --generate and check berry id
   local id=nil
-  if type.if_not_fruit then 
+  if type.check_fruit then 
     id=x\8+(y\8)*lvl_w
     for f in all(got_fruit[lvl_id]) do
       if f==id then return end
