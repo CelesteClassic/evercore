@@ -13,16 +13,17 @@ A modified version of [Smalleste](https://github.com/CelesteClassic/smalleste) b
 
 ## Info
 
-Evercore uses a completely reworked level system: Rather than simply loading rooms using coordinates, Evercore uses a table of level strings, each containing the coordinates, size, and name of the level.
+  [If you need help getting started, consider joining the Celeste Classic Discord and hopping over to #mod-dev!](https://discord.com/invite/9Dm3NCS)
 
 ## Level Table
 
+Evercore uses a completely reworked level system: Rather than simply loading rooms using coordinates, Evercore uses a table of level strings, each containing the coordinates, size, and name of the level.
 The level table uses the following format:
 
-`[id]="[x],[y],[w],[h],[title]"`
+`[id]="[x],[y],[w],[h],[title]",`
 
 The four coordinate variables are stored in **room units**: 16\*16 chunks of the PICO-8 map. For more precise room sizing and placement decimal numbers are supported.
-The `[id]` can be omitted and PICO-8 will automatically assign the string to the lowest positive unoccupied index (except zero).
+The `[id]=` can be omitted and PICO-8 will automatically assign the string to the lowest positive unoccupied index (except zero).
 These values are unpacked into the lvl_ variables when load_level() is called.
 
 ## Mapdata Table
@@ -30,7 +31,7 @@ These values are unpacked into the lvl_ variables when load_level() is called.
 To load a level from a mapdata string, first set up a string in the levels table at position (0,0) using the same size as the level you're trying to load.
 Then, paste the mapdata string into the mapdata table at the same index as the string you added to the levels table.
 
-For example, if your mapdata string was at index 4, you'd put `[4]="000000000000000000000000...",` into the mapdata table.
+For example, if your level string was at index 4, you'd insert `[4]="000000000000000000000000...",` into the mapdata table.
 
 ## Documentation
 
@@ -70,7 +71,7 @@ For example, if your mapdata string was at index 4, you'd put `[4]="000000000000
   * cam_spdx - The current x velocity of the camera
   * cam_spdy - The current y velocity of the camera
   
-  *cam_gain - How quickly the camera should center on the player
+  * cam_gain - How quickly the camera should center on the player
   
 #### Object Variables
 
