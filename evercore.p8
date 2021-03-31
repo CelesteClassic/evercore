@@ -104,7 +104,7 @@ player={
     local h_input=btn(➡️) and 1 or btn(⬅️) and -1 or 0
 
     -- spike collision / bottom death
-    if spikes_at(this.x+this.hitbox.x,this.y+this.hitbox.y,this.hitbox.w,this.hitbox.h,this.spd.x,this.spd.y) or this.y>lvl_ph then
+    if spikes_at(this.left(),this.top(),this.right(),this.bottom(),this.spd.x,this.spd.y) or this.y>lvl_ph then
       kill_player(this)
     end
 
@@ -1284,19 +1284,19 @@ function tile_at(x,y)
   return mget(lvl_x+x,lvl_y+y)
 end
 
-function spikes_at(x,y,w,h,xspd,yspd)
-  for i=max(0,x\8),min(lvl_w-1,(x+w-1)/8) do
-    for j=max(0,y\8),min(lvl_h-1,(y+h-1)/8) do
-      local tile=tile_at(i,j)
-      if (tile==17 and ((y+h-1)%8>=6 or y+h==j*8+8) and yspd>=0) or
-        (tile==27 and y%8<=2 and yspd<=0) or
-        (tile==43 and x%8<=2 and xspd<=0) or
-        (tile==59 and ((x+w-1)%8>=6 or x+w==i*8+8) and xspd>=0) then
-        return true
-      end
+function spikes_at(x1,y1,x2,y2,xspd,yspd)
+  for i=max(0,x1\8),min(lvl_w-1,x2/8) do
+    for j=max(0,y1\8),min(lvl_h-1,y2/8) do
+      if({[17]=y2%8>=6 and yspd>=0,
+          [27]=y1%8<=2 and yspd<=0,
+          [43]=x1%8<=2 and xspd<=0,
+          [59]=x2%8>=6 and xspd>=0})[tile_at(i,j)] then
+            return true 
+      end 
     end
   end
 end
+
 -->8
 --[map metadata]
 
