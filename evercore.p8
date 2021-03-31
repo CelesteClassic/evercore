@@ -92,7 +92,7 @@ player={
     this.dash_accel_x,this.dash_accel_y=0,0
     this.hitbox=rectangle(1,3,6,5)
     this.spr_off=0
-    this.solids=true
+    this.collides=true
     create_hair(this)
   end,
   update=function(this)
@@ -101,7 +101,7 @@ player={
     end
 
     -- horizontal input
-    local h_input=btn(➡️) and 1 or btn(⬅️) and-1 or 0
+    local h_input=btn(➡️) and 1 or btn(⬅️) and -1 or 0
 
     -- spike collision / bottom death
     if spikes_at(this.x+this.hitbox.x,this.y+this.hitbox.y,this.hitbox.w,this.hitbox.h,this.spd.x,this.spd.y) or this.y>lvl_ph then
@@ -190,7 +190,7 @@ player={
           this.init_smoke(0,4)
         else
           -- wall jump
-          local wall_dir=(this.is_solid(-3,0) and-1 or this.is_solid(3,0) and 1 or 0)
+          local wall_dir=(this.is_solid(-3,0) and -1 or this.is_solid(3,0) and 1 or 0)
           if wall_dir~=0 then
             psfx(2)
             this.jbuffer=0
@@ -215,11 +215,11 @@ player={
         has_dashed=true
         this.dash_effect_time=10
         -- vertical input
-        local v_input=btn(⬆️) and-1 or btn(⬇️) and 1 or 0
+        local v_input=btn(⬆️) and -1 or btn(⬇️) and 1 or 0
         -- calculate dash speeds
         this.spd=vector(h_input~=0 and
           h_input*(v_input~=0 and d_half or d_full) or
-          (v_input~=0 and 0 or this.flip.x and-1 or 1)
+          (v_input~=0 and 0 or this.flip.x and -1 or 1)
         ,v_input~=0 and v_input*(h_input~=0 and d_half or d_full) or 0)
         -- effects
         psfx(3)
@@ -260,7 +260,7 @@ player={
     end
     -- draw player hair and sprite
     set_hair_color(this.djump)
-    draw_hair(this,this.flip.x and-1 or 1)
+    draw_hair(this,this.flip.x and -1 or 1)
     draw_obj_sprite(this)
     unset_hair_color()
   end
@@ -291,7 +291,7 @@ function unset_hair_color()
   pal(8,8)
 end
 
--- [other entities]
+-- [other objects]
 
 player_spawn={
   layer=2,
@@ -435,6 +435,7 @@ balloon={
 
 fall_floor={
   init=function(this)
+    this.solid_obj=true
     this.state=0
   end,
   update=function(this)
@@ -652,20 +653,17 @@ platform={
   init=function(this)
     this.x-=4
     this.hitbox.w=16
-    this.last=this.x
-    this.dir=this.spr==11 and-1 or 1
+    this.dir=this.spr==11 and -1 or 1
+    this.semisolid_obj=true
   end,
   update=function(this)
     this.spd.x=this.dir*0.65
-    if this.x<-16 then this.x=lvl_pw
-    elseif this.x>lvl_pw then this.x=-16 end
-    if not this.player_here() then
-      local hit=this.check(player,0,-1)
-      if hit then
-        hit.move(this.x-this.last,0,1)
-      end
+    --screenwrap
+    if this.x<-16 then
+      this.x=lvl_pw
+    elseif this.x>lvl_pw then
+      this.x=-16
     end
-    this.last=this.x
   end,
   draw=function(this)
     spr(11,this.x,this.y-1,2,1)
@@ -829,7 +827,7 @@ function init_object(type,x,y,tile)
   local obj={
     type=type,
     collideable=true,
-    solids=false,
+    collides=false,
     spr=tile,
     flip=vector(false,false),
     x=x,
@@ -840,11 +838,18 @@ function init_object(type,x,y,tile)
     fruit_id=id,
   }
 
+  function obj.left() return obj.x+obj.hitbox.x end
+  function obj.right() return obj.left()+obj.hitbox.w-1 end
+  function obj.top() return obj.y+obj.hitbox.y end
+  function obj.bottom() return obj.top()+obj.hitbox.h-1 end
+
   function obj.is_solid(ox,oy)
-    return (oy>0 and not obj.check(platform,ox,0) and obj.check(platform,ox,oy)) or
-    obj.is_flag(ox,oy,0) or
-    obj.check(fall_floor,ox,oy) or
-    obj.check(fake_wall,ox,oy)
+    for o in all(objects) do 
+      if o!=obj and (o.solid_obj or o.semisolid_obj and not obj.objcollide(o,ox,0) and oy>0) and obj.objcollide(o,ox,oy) then 
+        return true 
+      end 
+    end 
+    return obj.is_flag(ox,oy,0) -- solid terrain
   end
 
   function obj.is_ice(ox,oy)
@@ -852,16 +857,26 @@ function init_object(type,x,y,tile)
   end
 
   function obj.is_flag(ox,oy,flag)
-    return tile_flag_at(obj.x+obj.hitbox.x+ox,obj.y+obj.hitbox.y+oy,obj.hitbox.w,obj.hitbox.h,flag)
+    for i=max(0,(obj.left()+ox)\8),min(lvl_w-1,(obj.right()+ox)/8) do
+      for j=max(0,(obj.top()+oy)\8),min(lvl_h-1,(obj.bottom()+oy)/8) do
+        if fget(tile_at(i,j),flag) then
+          return true
+        end
+      end
+    end
+  end
+
+  function obj.objcollide(other,ox,oy) 
+    return other.collideable and
+    other.right()>=obj.left()+ox and 
+    other.bottom()>=obj.top()+oy and
+    other.left()<=obj.right()+ox and 
+    other.top()<=obj.bottom()+oy
   end
 
   function obj.check(type,ox,oy)
     for other in all(objects) do
-      if other and other.type==type and other~=obj and other.collideable and
-        other.x+other.hitbox.x+other.hitbox.w>obj.x+obj.hitbox.x+ox and
-        other.y+other.hitbox.y+other.hitbox.h>obj.y+obj.hitbox.y+oy and
-        other.x+other.hitbox.x<obj.x+obj.hitbox.x+obj.hitbox.w+ox and
-        other.y+other.hitbox.y<obj.y+obj.hitbox.y+obj.hitbox.h+oy then
+      if other and other.type==type and other~=obj and obj.objcollide(other,ox,oy) then
         return other
       end
     end
@@ -876,9 +891,13 @@ function init_object(type,x,y,tile)
       obj.rem[axis]+=axis=="x" and ox or oy
       local amt=round(obj.rem[axis])
       obj.rem[axis]-=amt
-      if obj.solids then
+      local upmoving=axis=="y" and amt<0
+      local riding=not obj.player_here() and obj.check(player,0,upmoving and amt or -1)
+      local movamt
+      if obj.collides then
         local step=sign(amt)
         local d=axis=="x" and step or 0
+        local p=obj[axis]
         for i=start,abs(amt) do
           if not obj.is_solid(d,step-d) then
             obj[axis]+=step
@@ -887,8 +906,35 @@ function init_object(type,x,y,tile)
             break
           end
         end
+        movamt=obj[axis]-p --save how many px moved to use later for solids
       else
+        movamt=amt 
+        if (obj.solid_obj or obj.semisolid_obj) and upmoving and riding then 
+          movamt+=obj.top()-riding.bottom()-1
+          local hamt=round(riding.spd.y+riding.rem.y)
+          hamt+=sign(hamt)
+          if movamt<hamt then 
+            riding.spd.y=max(riding.spd.y,0)
+          else 
+            movamt=0
+          end
+        end
         obj[axis]+=amt
+      end
+      if (obj.solid_obj or obj.semisolid_obj) and obj.collideable then
+        obj.collideable=false 
+        local hit=obj.player_here()
+        if hit and obj.solid_obj then 
+          hit.move(axis=="x" and (amt>0 and obj.right()+1-hit.left() or amt<0 and obj.left()-hit.right()-1) or 0, 
+                  axis=="y" and (amt>0 and obj.bottom()+1-hit.top() or amt<0 and obj.top()-hit.bottom()-1) or 0,
+                  1)
+          if(obj.player_here()) then 
+            kill_player(hit)
+          end 
+        elseif riding then 
+          riding.move(axis=="x" and movamt or 0, axis=="y" and movamt or 0,1)
+        end
+        obj.collideable=true 
       end
     end
   end
@@ -1232,16 +1278,6 @@ end
 
 function maybe()
   return rnd(1)<0.5
-end
-
-function tile_flag_at(x,y,w,h,flag)
-  for i=max(0,x\8),min(lvl_w-1,(x+w-1)/8) do
-    for j=max(0,y\8),min(lvl_h-1,(y+h-1)/8) do
-      if fget(tile_at(i,j),flag) then
-        return true
-      end
-    end
-  end
 end
 
 function tile_at(x,y)
