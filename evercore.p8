@@ -584,6 +584,9 @@ lifeup={
 
 fake_wall={
   check_fruit=true,
+  init=function(this)
+    this.solid_obj=true
+  end,
   update=function(this)
     this.hitbox=rectangle(-1,-1,18,18)
     local hit=this.player_here()
@@ -758,27 +761,30 @@ orb={
 flag={
   init=function(this)
     this.x+=5
-    this.score=0
-    for lvl in all(got_fruit) do
-      for f in all(lvl) do
-        this.score+=1
-      end
-    end
   end,
   update=function(this)
     if not this.show and this.player_here() then
+      --count berries
+      if not berry_count then
+        berry_count=0
+        for lvl in all(got_fruit) do
+          for f in all(lvl) do
+            berry_count+=1
+          end
+        end
+      end
+
       sfx(55)
       sfx_timer,this.show,time_ticking=30,true,false
     end
   end,
   draw=function(this)
-    this.spr=118+frames/5%3
-    draw_obj_sprite(this)
+    spr(118+frames/5%3,this.x,this.y)
     if this.show then
       camera()
       rectfill(32,2,96,31,0)
       spr(26,55,6)
-      ?"x"..this.score,64,9,7
+      ?"x"..berry_count,64,9,7
       draw_time(49,16)
       ?"deaths:"..deaths,48,24,7
       camera(draw_x,draw_y)
