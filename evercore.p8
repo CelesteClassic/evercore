@@ -3,15 +3,13 @@ version 32
 __lua__
 --~evercore~
 --a celeste classic mod base
---1.4.0 dev
+--v2.0.0 stable
 
 --original game by:
 --maddy thorson + noel berry
 
---cart by: taco360
---based on meep's smalleste
---and akliant's hex loading
---with help from gonengazit
+--major project contributions by
+--taco360, meep, gonengazit, and akliant
 
 -- [data structures]
 
@@ -1006,12 +1004,12 @@ function next_level()
   load_level(next_lvl)
 end
 
-function load_level(lvl)
+function load_level(id)
   has_dashed=false
   has_key=false
 
   --set berry index
-  if not got_fruit[lvl] then got_fruit[lvl]={} end
+  if not got_fruit[id] then got_fruit[id]={} end
 
   --remove existing objects
   foreach(objects,destroy_object)
@@ -1020,10 +1018,10 @@ function load_level(lvl)
   cam_spdx=0
   cam_spdy=0
 
-  local diff_level=lvl_id~=lvl
+  local diff_level=lvl_id~=id
 
   --set level index
-  lvl_id=lvl
+  lvl_id=id
 
   --set level globals
   local tbl=split(levels[lvl_id])
