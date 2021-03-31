@@ -816,7 +816,7 @@ tiles={
 
 function init_object(type,x,y,tile)
   --generate and check berry id
-  local id=nil
+  local id
   if type.check_fruit then
     id=x\8+(y\8)*lvl_w
     for f in all(got_fruit[lvl_id]) do
