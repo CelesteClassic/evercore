@@ -92,9 +92,9 @@ For example, if your level string was at index 4, you'd insert `[4]="00000000000
   
   * hitbox - A rectangle containing integers. Used to calculate the position and size of the object's hitbox
   
-  * fruit_id - The berry index position of the object. Only generated if the object type has fruit_check set to true
+  * fruit_id - The berry index position of the object. Generated for all objects, but only used if the object type has fruit_check set to true
   
 #### Object Type Variables
 
   * layer - Which layer to draw the object to
-  * fruit_check - Whether the object should check if it's berry index position is stored in the got_fruit table before being initialized.
+  * fruit_check - Whether the object should check if its berry index position is stored in the got_fruit table before being initialized.
