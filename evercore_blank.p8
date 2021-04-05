@@ -35,12 +35,13 @@ cam_x,cam_y,cam_spdx,cam_spdy,cam_gain=0,0,0,0,0.25
 function _init()
   frames,start_game_flash=0,0
   music(40,0,7)
-  load_level(0)
+  --load_level(0)
+  lvl_id=0
 end
 
 function begin_game()
   max_djump=1
-  deaths,frames,seconds,minutes,music_timer,time_ticking=0,0,0,0,0,true
+  deaths,frames,seconds,minutes,music_timer,time_ticking,berry_count=0,0,0,0,0,true,0
   music(0,0,7)
   load_level(1)
 end
@@ -71,7 +72,7 @@ for i=0,24 do
     y=rnd128(),
     s=flr(rnd(1.25)),
     spd=0.25+rnd(5),
-    off=rnd(1),
+    off=rnd(),
     c=6+rnd(2),
   })
 end
@@ -157,7 +158,7 @@ player={
 
       -- facing direction
       if this.spd.x~=0 then
-        this.flip.x=(this.spd.x<0)
+        this.flip.x=this.spd.x<0
       end
 
       -- y movement
@@ -193,7 +194,7 @@ player={
             psfx(2)
             this.jbuffer=0
             this.spd.y=-2
-            this.spd.x=-wall_dir*(maxrun+1)
+            this.spd=vector(wall_dir*(-1-maxrun),-2)
             if not this.is_ice(wall_dir*3,0) then
               -- wall jump smoke
               this.init_smoke(wall_dir*6)
@@ -236,10 +237,10 @@ player={
 
     -- animation
     this.spr_off+=0.25
-    this.spr=not on_ground and (this.is_solid(h_input,0) and 5 or 3) or -- wall slide or mid air
+    this.spr = not on_ground and (this.is_solid(h_input,0) and 5 or 3) or  -- wall slide or mid air
     btn(⬇️) and 6 or -- crouch
     btn(⬆️) and 7 or -- look up
-    1+(this.spd.x~=0 and h_input~=0 and this.spr_off%4 or 0) -- walk or stand
+    this.spd.x~=0 and h_input~=0 and 1+this.spr_off%4 or 1 -- walk or stand
 
     -- exit level off the top (except summit)
     if this.y<-4 and levels[lvl_id+1] then
@@ -252,15 +253,16 @@ player={
 
   draw=function(this)
     -- clamp in screen
-    if this.x<-1 or this.x>lvl_pw-7 then
-      this.x=mid(this.x,-1,lvl_pw-7)
+    local clamped=mid(this.x,-1,lvl_pw-7)
+    if this.x~=clamped then
+      this.x=clamped
       this.spd.x=0
     end
     -- draw player hair and sprite
     set_hair_color(this.djump)
-    draw_hair(this,this.flip.x and -1 or 1)
+    draw_hair(this)
     draw_obj_sprite(this)
-    unset_hair_color()
+    pal()
   end
 }
 
@@ -272,21 +274,17 @@ function create_hair(obj)
 end
 
 function set_hair_color(djump)
-  pal(8,djump==1 and 8 or djump==2 and 7+(frames\3)%2*4 or 12)
+  pal(8,djump==1 and 8 or djump==2 and 7+frames\3%2*4 or 12)
 end
 
-function draw_hair(obj,facing)
-  local last=vector(obj.x+4-facing*2,obj.y+(btn(⬇️) and 4 or 3))
+function draw_hair(obj)
+  local last=vector(obj.x+(obj.flip.x and 6 or 2),obj.y+(btn(⬇️) and 4 or 3))
   for i,h in pairs(obj.hair) do
     h.x+=(last.x-h.x)/1.5
     h.y+=(last.y+0.5-h.y)/1.5
     circfill(h.x,h.y,mid(4-i,1,2),8)
     last=h
   end
-end
-
-function unset_hair_color()
-  pal(8,8)
 end
 
 -- [other objects]
@@ -298,20 +296,18 @@ player_spawn={
     this.spr=3
     this.target=this.y
     this.y=min(this.y+48,lvl_ph)
-    cam_x=mid(this.x,64,lvl_pw-64)
-    cam_y=mid(this.y,64,lvl_ph-64)
+    cam_x,cam_y=mid(this.x,64,lvl_pw-64),mid(this.y,64,lvl_ph-64)
     this.spd.y=-4
     this.state=0
     this.delay=0
     create_hair(this)
+    this.djump=max_djump
   end,
   update=function(this)
     -- jumping up
-    if this.state==0 then
-      if this.y<this.target+16 then
-        this.state=1
-        this.delay=3
-      end
+    if this.state==0 and this.y<this.target+16 then
+      this.state=1
+      this.delay=3
       -- falling
     elseif this.state==1 then
       this.spd.y+=0.5
@@ -340,12 +336,7 @@ player_spawn={
       end
     end
   end,
-  draw=function(this)
-    set_hair_color(max_djump)
-    draw_hair(this,1)
-    draw_obj_sprite(this)
-    unset_hair_color()
-  end
+  draw= player.draw
 }
 
 spring={
@@ -371,10 +362,7 @@ spring={
         this.delay=10
         this.init_smoke()
         -- crumble below spring
-        local below=this.check(fall_floor,0,1)
-        if below then
-          break_fall_floor(below)
-        end
+        break_fall_floor(this.check(fall_floor,0,1) or {})
         psfx(8)
       end
     elseif this.delay>0 then
@@ -439,10 +427,12 @@ fall_floor={
   update=function(this)
     -- idling
     if this.state==0 then
-      if this.check(player,0,-1) or this.check(player,-1,0) or this.check(player,1,0) then
-        break_fall_floor(this)
-      end
-      -- shaking
+      for i=0,2 do
+        if this.check(player,i-1,-(i%2)) then 
+          break_fall_floor(this)
+        end
+      end 
+    -- shaking
     elseif this.state==1 then
       this.delay-=1
       if this.delay<=0 then
@@ -462,13 +452,7 @@ fall_floor={
     end
   end,
   draw=function(this)
-    if this.state~=2 then
-      if this.state~=1 then
-        draw_obj_sprite(this)
-      else
-        spr(26-this.delay/5,this.x,this.y)
-      end
-    end
+    spr(this.state==1 and 26-this.delay/5 or this.state==0 and 23,this.x,this.y) --add an if statement if you use sprite 0 (other stuff also breaks if you do this i think)
   end
 }
 
@@ -477,15 +461,13 @@ function break_fall_floor(obj)
     psfx(15)
     obj.state=1
     obj.delay=15--how long until it falls
-    obj.init_smoke()
-    local hit=obj.check(spring,0,-1)
-    if hit then
-      hit.hide_in=15
-    end
+    obj.init_smoke();
+    (obj.check(spring,0,-1) or {}).hide_in=15
   end
 end
 
 smoke={
+  layer=3,
   init=function(this)
     this.spd=vector(0.3+rnd(0.2),-0.1)
     this.x+=-1+rnd(2)
@@ -545,7 +527,7 @@ fly_fruit={
   draw=function(this)
     spr(26,this.x,this.y)
     for ox=-6,6,12 do
-      spr((has_dashed or sin(this.step)>=0) and 45 or (this.y>this.start and 47 or 46),this.x+ox,this.y-2,1,1,ox==-6)
+      spr((has_dashed or sin(this.step)>=0) and 45 or this.y>this.start and 47 or 46,this.x+ox,this.y-2,1,1,ox==-6)
     end
   end
 }
@@ -556,9 +538,12 @@ function check_fruit(this)
     hit.djump=max_djump
     sfx_timer=20
     sfx(13)
-    add(got_fruit[lvl_id],this.fruit_id)
+    got_fruit[this.fruit_id]=true
     init_object(lifeup,this.x,this.y)
     destroy_object(this)
+    if time_ticking then 
+      berry_count+=1
+    end 
   end
 end
 
@@ -566,8 +551,6 @@ lifeup={
   init=function(this)
     this.spd.y=-0.25
     this.duration=30
-    this.x-=2
-    this.y-=4
     this.flash=0
   end,
   update=function(this)
@@ -578,7 +561,7 @@ lifeup={
   end,
   draw=function(this)
     this.flash+=0.5
-    ?"1000",this.x-2,this.y,7+this.flash%2
+    ?"1000",this.x-4,this.y-4,7+this.flash%2
   end
 }
 
@@ -617,9 +600,8 @@ end
 
 key={
   update=function(this)
-    local was=flr(this.spr)
     this.spr=flr(9.5+sin(frames/30))
-    if this.spr==10 and this.spr~=was then
+    if frames==18 then --if spr==10 and previous spr~=10
       this.flip.x=not this.flip.x
     end
     if this.player_here() then
@@ -692,7 +674,7 @@ big_chest={
     this.state=0
     this.hitbox.w=16
   end,
-  draw=function(this)
+  update=function(this)
     if this.state==0 then
       local hit=this.check(player,0,8)
       if hit and hit.is_solid(0,1) then
@@ -706,8 +688,6 @@ big_chest={
         this.timer=60
         this.particles={}
       end
-      draw_obj_sprite(this)
-      spr(96,this.x+8,this.y,1,1,true)
     elseif this.state==1 then
       this.timer-=1
       flash_bg=true
@@ -726,6 +706,13 @@ big_chest={
         init_object(orb,this.x+4,this.y+4,102)
         pause_player=false
       end
+    end
+  end,
+  draw=function(this)
+    if this.state==0 then
+      draw_obj_sprite(this)
+      spr(96,this.x+8,this.y,1,1,true)
+    elseif this.state==1 then
       foreach(this.particles,function(p)
         p.y+=p.spd
         line(this.x+p.x,this.y+8-p.y,this.x+p.x,min(this.y+8-p.y+p.h,this.y+8),7)
@@ -740,7 +727,7 @@ orb={
   init=function(this)
     this.spd.y=-4
   end,
-  draw=function(this)
+  update=function(this) 
     this.spd.y=appr(this.spd.y,0,0.5)
     local hit=this.player_here()
     if this.spd.y==0 and hit then
@@ -751,6 +738,8 @@ orb={
       max_djump=2
       hit.djump=2
     end
+  end,
+  draw=function(this)
     draw_obj_sprite(this)
     for i=0,0.875,0.125 do
       circfill(this.x+4+cos(frames/30+i)*8,this.y+4+sin(frames/30+i)*8,1,7)
@@ -764,16 +753,6 @@ flag={
   end,
   update=function(this)
     if not this.show and this.player_here() then
-      --count berries
-      if not berry_count then
-        berry_count=0
-        for lvl in all(got_fruit) do
-          for f in all(lvl) do
-            berry_count+=1
-          end
-        end
-      end
-
       sfx(55)
       sfx_timer,this.show,time_ticking=30,true,false
     end
@@ -820,20 +799,17 @@ tiles={
 
 function init_object(type,x,y,tile)
   --generate and check berry id
-  local id
-  if type.check_fruit then
-    id=x\8+(y\8)*lvl_w
-    for f in all(got_fruit[lvl_id]) do
-      if f==id then return end
-    end
+  local id=x..","..y..","..lvl_id
+  if type.check_fruit and got_fruit[id] then 
+    return 
   end
 
   local obj={
     type=type,
     collideable=true,
-    collides=false,
+    --collides=false,
     spr=tile,
-    flip=vector(false,false),
+    flip=vector(),--false,false
     x=x,
     y=y,
     hitbox=rectangle(0,0,8,8),
@@ -891,7 +867,7 @@ function init_object(type,x,y,tile)
   end
 
   function obj.move(ox,oy,start)
-    for axis in all({"x","y"}) do
+    for axis in all{"x","y"} do
       obj.rem[axis]+=axis=="x" and ox or oy
       local amt=round(obj.rem[axis])
       obj.rem[axis]-=amt
@@ -932,7 +908,7 @@ function init_object(type,x,y,tile)
           hit.move(axis=="x" and (amt>0 and obj.right()+1-hit.left() or amt<0 and obj.left()-hit.right()-1) or 0, 
                   axis=="y" and (amt>0 and obj.bottom()+1-hit.top() or amt<0 and obj.top()-hit.bottom()-1) or 0,
                   1)
-          if(obj.player_here()) then 
+          if obj.player_here() then 
             kill_player(hit)
           end 
         elseif riding then 
@@ -947,11 +923,9 @@ function init_object(type,x,y,tile)
     init_object(smoke,obj.x+(ox or 0),obj.y+(oy or 0),29)
   end
 
-  add(objects,obj)
+  add(objects,obj);
 
-  if obj.type.init then
-    obj.type.init(obj)
-  end
+  (obj.type.init or stat)(obj)
 
   return obj
 end
@@ -965,7 +939,7 @@ function kill_player(obj)
   sfx(0)
   deaths+=1
   destroy_object(obj)
-  dead_particles={}
+  --dead_particles={}
   for dir=0,0.875,0.125 do
     add(dead_particles,{
       x=obj.x+4,
@@ -979,20 +953,22 @@ function kill_player(obj)
 end
 
 function move_camera(obj)
-  cam_spdx=cam_gain*(4+obj.x+0*obj.spd.x-cam_x)
-  cam_spdy=cam_gain*(4+obj.y+0*obj.spd.y-cam_y)
+  cam_spdx=cam_gain*(4+obj.x-cam_x)
+  cam_spdy=cam_gain*(4+obj.y-cam_y)
 
   cam_x+=cam_spdx
   cam_y+=cam_spdy
 
   --clamp camera to level boundaries
-  if cam_x<64 or cam_x>lvl_pw-64 then
+  local clamped=mid(cam_x,64,lvl_pw-64)
+  if cam_x~=clamped then
     cam_spdx=0
-    cam_x=mid(cam_x,64,lvl_pw-64)
+    cam_x=clamped
   end
-  if cam_y<64 or cam_y>lvl_ph-64 then
+  clamped=mid(cam_y,64,lvl_ph-64)
+  if cam_y~=clamped then
     cam_spdy=0
-    cam_y=mid(cam_y,64,lvl_ph-64)
+    cam_y=clamped
   end
 end
 
@@ -1014,15 +990,12 @@ function load_level(id)
   has_dashed=false
   has_key=false
 
-  --set berry index
-  if not got_fruit[id] then got_fruit[id]={} end
 
   --remove existing objects
   foreach(objects,destroy_object)
 
   --reset camera speed
-  cam_spdx=0
-  cam_spdy=0
+  cam_spdxתcam_spdy=0,0
 
   local diff_level=lvl_id~=id
 
@@ -1035,17 +1008,18 @@ function load_level(id)
   lvl_pw=lvl_w*8
   lvl_ph=lvl_h*8
 
-  --reload map
-  --level title setup
-  if not is_title() then
-    if diff_level then reload() end
-    ui_timer=5
-  end
 
-  --chcek for mapdata strings
-  if diff_level and mapdata[lvl_id] then
-    replace_mapdata(lvl_x,lvl_y,lvl_w,lvl_h,mapdata[lvl_id])
-  end
+  --level title setup
+    ui_timer=5
+
+  --reload map
+  if diff_level then 
+    reload()
+    --chcek for mapdata strings
+    if mapdata[lvl_id] then
+      replace_mapdata(lvl_x,lvl_y,lvl_w,lvl_h,mapdata[lvl_id])
+    end
+  end 
 
   -- entities
   for tx=0,lvl_w-1 do
@@ -1097,10 +1071,8 @@ function _update()
 
   -- update each object
   foreach(objects,function(obj)
-    obj.move(obj.spd.x,obj.spd.y,0)
-    if obj.type.update then
-      obj.type.update(obj)
-    end
+    obj.move(obj.spd.x,obj.spd.y,0);
+    (obj.type.update or stat)(obj)
   end)
 
   --move camera to player
@@ -1138,11 +1110,8 @@ function _draw()
 
   -- start game flash
   if is_title() and start_game then
-    local c=start_game_flash>10 and (frames%10<5 and 7 or 10) or (start_game_flash>5 and 2 or start_game_flash>0 and 1 or 0)
-    if c<10 then
-      for i=1,15 do
-        pal(i,c)
-      end
+    for i=1,15 do
+      pal(i,start_game_flash>10 and (frames%10<5 and 7 or i) or (start_game_flash>5 and 2 or start_game_flash>0 and 1 or 0))
     end
   end
 
@@ -1176,14 +1145,10 @@ function _draw()
   --3: foreground layer
   local layers={{},{},{}}
   foreach(objects,function(o)
-    if o.type.layer then
-      if o.type.layer==0 then
-        draw_object(o) --draw below terrain
-      else
-        add(layers[o.type.layer],o) --add object to layer
-      end
+    if o.type.layer==0 then
+      draw_object(o) --draw below terrain
     else
-      add(layers[1],o) --draw below player (default)
+      add(layers[o.type.layer or 1],o) --add object to layer, default draw below player
     end
   end)
 
@@ -1253,12 +1218,8 @@ end
 
 function draw_ui(draw_x,draw_y)
   rectfill(24+draw_x,58+draw_y,104+draw_x,70+draw_y,0)
-  if lvl_title then
-    ?lvl_title,64-#lvl_title*2+draw_x,62+draw_y,7
-  else
-    local level=lvl_id*100
-    ?level.." m",52+(level<1000 and 2 or 0)+draw_x,62+draw_y,7
-  end
+  local title=lvl_title or lvl_id.."00 m"
+  ?title,64-#title*2+draw_x,62+draw_y,7
   draw_time(4+draw_x,4+draw_y)
 end
 
@@ -1281,7 +1242,7 @@ function sign(v)
 end
 
 function maybe()
-  return rnd(1)<0.5
+  return rnd()<0.5
 end
 
 function tile_at(x,y)
@@ -1307,7 +1268,6 @@ end
 --level table
 --"x,y,w,h,title"
 levels={
-  [0]="-1,-1,1,1",--title screen
   "0,0,1,1",
 }
 
@@ -1317,11 +1277,11 @@ mapdata={}
 
 --replace mapdata with hex
 function replace_mapdata(x,y,w,h,data)
-  for y_=1,h*2,2 do
+  for y_=0,h*2-1,2 do
+    local offset=y+y_\32<2 and 8192 or 0
     for x_=1,w*2,2 do
-      local offset=y_<64 and 8192 or 0
-      local hex=sub(data,x_+(y_-1)*w,x_+(y_-1)*w+1)
-      poke(offset+x+y*128+(y_-1)*64+x_/2,"0x"..hex)
+      local i=x_+y_*w
+      poke(offset+x+y*128+y_*64+x_/2,"0x"..sub(data,i,i+1))
     end
   end
 end
@@ -1339,24 +1299,18 @@ and can be safely removed!
 --copy mapdata string to clipboard
 function get_mapdata(x,y,w,h)
   local reserve=""
-  for y_=1,h*2,2 do
+  for y_=0,h*2-1,2 do
+    local offset=y+y_\32<2 and 8192 or 0
     for x_=1,w*2,2 do
-      local offset=y_<64 and 8192 or 0
-      reserve=reserve..num2hex(peek(offset+x+y*128+(y_-1)*64+x_/2))
+      reserve=reserve..num2hex(peek(offset+x+y*128+y_*64+x_/2))
     end
   end
   printh(reserve,"@clip")
 end
 
 --convert mapdata to memory data
-function num2hex(number)
-  local resultstr=""
-  while number>0 do
-    local remainder=1+number%16
-    number\=16
-    resultstr=sub("0123456789abcdef",remainder,remainder)..resultstr
-  end
-  return #resultstr==0 and "00" or #resultstr==1 and "0"..resultstr or resultstr
+function num2hex(v) 
+  return sub(tostr(v,true),5,6)
 end
 __gfx__
 000000000000000000000000088888800000000000000000000000000000000000aaaaa0000aaa000000a0000007707770077700000000000000000000000000
