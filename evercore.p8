@@ -193,7 +193,6 @@ player={
           if wall_dir~=0 then
             psfx(2)
             this.jbuffer=0
-            this.spd.y=-2
             this.spd=vector(wall_dir*(-1-maxrun),-2)
             if not this.is_ice(wall_dir*3,0) then
               -- wall jump smoke
