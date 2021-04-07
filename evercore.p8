@@ -994,7 +994,7 @@ function load_level(id)
   foreach(objects,destroy_object)
 
   --reset camera speed
-  cam_spdxתcam_spdy=0,0
+  cam_spdx,cam_spdy=0,0
 
   local diff_level=lvl_id~=id
 
