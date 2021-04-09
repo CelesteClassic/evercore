@@ -41,7 +41,7 @@ end
 
 function begin_game()
   max_djump=1
-  deaths,frames,seconds,minutes,music_timer,time_ticking,berry_count=0,0,0,0,0,true,0
+  deaths,frames,seconds,minutes,music_timer,time_ticking,fruit_count=0,0,0,0,0,true,0
   music(0,0,7)
   load_level(1)
 end
@@ -541,7 +541,7 @@ function check_fruit(this)
     init_object(lifeup,this.x,this.y)
     destroy_object(this)
     if time_ticking then 
-      berry_count+=1
+      fruit_count+=1
     end 
   end
 end
@@ -764,7 +764,7 @@ flag={
       camera()
       rectfill(32,2,96,31,0)
       spr(26,55,6)
-      ?"x"..berry_count,64,9,7
+      ?"x"..fruit_count,64,9,7
       draw_time(49,16)
       ?"deaths:"..deaths,48,24,7
       camera(draw_x,draw_y)
@@ -802,7 +802,7 @@ function init_object(type,x,y,tile)
   --generate and check berry id
   local id=x..","..y..","..lvl_id
   if type.check_fruit and got_fruit[id] then 
-    return 
+    return
   end
 
   local obj={
