@@ -28,10 +28,11 @@ These values are unpacked into the lvl_ variables when load_level() is called.
 
 ## Mapdata Table
 
-To load a level from a mapdata string, first set up a string in the levels table at position (0,0) using the same size as the level you're trying to load.
-Then, paste the mapdata string into the mapdata table at the same index as the string you added to the levels table.
+To load a level from a mapdata string, also known as **hex loading**, first you'll need to open the cart with the level you're trying to copy and run the **get_mapdata()** function, using the map position and size of the level. This will generate a **mapdata string** and copy it into your clipboard.
+Then, open the cart you're trying to load the level in and add a new **level string** to the **level table**. Set it's coordinates to (0,0) and use the same size as the level you're trying to load. It's okay if this overlaps with other levels, as that section of the map will be temporarily overwritten (and restored upon leaving the level).
+Finally, paste the mapdata string into the **mapdata table** at the same index as the level string you added to the levels table.
 
-For example, if your level string was at index 4, you'd insert `[4]="000000000000000000000000...",` into the mapdata table.
+The default Evercore cart hex loads Summit if you want to see a better example on how to set this up.
 
 ## Documentation
 
@@ -47,13 +48,15 @@ For example, if your level string was at index 4, you'd insert `[4]="00000000000
   
   * move_camera(obj) - Attempt to move the camera towards object [obj]
   
-  * init_object(type, x, y, tile)- Creates a new object of type [type] at postition [x], [y], with sprite [tile].
+  * init_object(type, x, y, tile)- Creates a new object of type [type] at postition [x], [y], with sprite [tile]
   * obj.init_smoke(ox, oy) - Spawns a smoke object at [obj] with an offset of [ox], [oy]
   
 #### Globals
 
   * levels - A table containing the coordinates of every level that can be loaded
   * mapdata - A table containing the mapdata strings to be loaded by specific levels
+
+  * lvl_id - The table index of the currently loaded level
 
   * lvl_x - The X position of the currently loaded level, in tiles
   * lvl_y - The Y position of the currently loaded level, in tiles
@@ -73,14 +76,19 @@ For example, if your level string was at index 4, you'd insert `[4]="00000000000
   
   * cam_gain - How quickly the camera should center on the player
   
+  * ui_timer - Tracks how many frames the level title should display on screen.
+  
+  * time_ticking - Whether the speedrun timer is running. The flag object sets this to false when touched. Berries will not be counted if grabbed while this false
+  * fruit_count - How many berries the player has collected.
+  
 #### Object Variables
 
   * type - The object type table to use as a base
   
   * collideable - Whether other objects can collide with this object
   * collides - Whether this object collides with solids and semisolids
-  * solid_obj - Whether this object is marked as a "solid" and will push and carry objects that collide with it
-  * semisolid_obj - Whether this object is marked as a "semisolid" and will carry objects on top of it
+  * solid_obj - Whether this object is marked as a **solid** and will push and carry objects that collide with it
+  * semisolid_obj - Whether this object is marked as a **semisolid** and will carry objects on top of it
   
   * spr - The current sprite of the object
   * flip - A vector containing booleans. Used to determine if the object's sprite should be flipped in the set directions
@@ -97,4 +105,4 @@ For example, if your level string was at index 4, you'd insert `[4]="00000000000
 #### Object Type Variables
 
   * layer - Which layer to draw the object to
-  * fruit_check - Whether the object should check if its berry index position is stored in the got_fruit table before being initialized.
+  * fruit_check - Whether the object should check if its berry index position is stored in the got_fruit table before being initialized
