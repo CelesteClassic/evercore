@@ -661,8 +661,10 @@ message={
   draw=function(this)
     if this.player_here() then
       for i,s in pairs(split(this.text,"#")) do
-        rectfill(7+draw_x,7*i+draw_y,120+draw_x,7*i+6+draw_y,7)
-        ?s,64-#s*2+draw_x,7*i+1+draw_y,0
+        camera()
+        rectfill(7,7*i,120,7*i+6,7)
+        ?s,64-#s*2,7*i+1,0
+        camera(draw_x,draw_y)
       end
     end
   end
@@ -1114,11 +1116,6 @@ function _draw()
     end
   end
 
-  --set cam draw position
-  draw_x=is_title() and 0 or round(cam_x)-64
-  draw_y=is_title() and 0 or round(cam_y)-64
-  camera(draw_x,draw_y)
-
   -- draw bg color
   cls(flash_bg and frames/5 or new_bg and 2 or 0)
 
@@ -1126,13 +1123,18 @@ function _draw()
   if not is_title() then
     foreach(clouds,function(c)
       c.x+=c.spd-cam_spdx
-      rectfill(c.x+draw_x,c.y+draw_y,c.x+c.w+draw_x,c.y+16-c.w*0.1875+draw_y,new_bg and 14 or 1)
+      rectfill(c.x,c.y,c.x+c.w,c.y+16-c.w*0.1875,new_bg and 14 or 1)
       if c.x>128 then
         c.x=-c.w
         c.y=rnd(120)
       end
     end)
   end
+
+  --set cam draw position
+  draw_x=is_title() and 0 or round(cam_x)-64
+  draw_y=is_title() and 0 or round(cam_y)-64
+  camera(draw_x,draw_y)
 
   -- draw bg terrain
   map(lvl_x,lvl_y,0,0,lvl_w,lvl_h,4)
@@ -1186,9 +1188,10 @@ function _draw()
   end)
 
   -- draw level title
+  camera()
   if ui_timer>=-30 then
     if ui_timer<0 then
-      draw_ui(draw_x,draw_y)
+      draw_ui()
     end
     ui_timer-=1
   end
@@ -1215,11 +1218,11 @@ function draw_time(x,y)
   ?two_digit_str(minutes\60)..":"..two_digit_str(minutes%60)..":"..two_digit_str(seconds),x+1,y+1,7
 end
 
-function draw_ui(draw_x,draw_y)
-  rectfill(24+draw_x,58+draw_y,104+draw_x,70+draw_y,0)
+function draw_ui()
+  rectfill(24,58,104,70,0)
   local title=lvl_title or lvl_id.."00 m"
-  ?title,64-#title*2+draw_x,62+draw_y,7
-  draw_time(4+draw_x,4+draw_y)
+  ?title,64-#title*2,62,7
+  draw_time(4,4)
 end
 
 function two_digit_str(x)
