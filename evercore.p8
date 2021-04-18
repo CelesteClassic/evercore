@@ -672,7 +672,7 @@ message={
 
 big_chest={
   init=function(this)
-    this.state=0
+    this.state=max_djump>1 and 2 or 0
     this.hitbox.w=16
   end,
   update=function(this)
