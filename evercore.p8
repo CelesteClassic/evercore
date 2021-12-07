@@ -1,9 +1,9 @@
 pico-8 cartridge // http://www.pico-8.com
-version 32
+version 34
 __lua__
 --~evercore~
 --a celeste classic mod base
---v2.0.3 stable
+--v2.0.4 stable
 
 --original game by:
 --maddy thorson + noel berry
@@ -28,14 +28,13 @@ objects,got_fruit={},{}
 --timers
 freeze,delay_restart,sfx_timer,music_timer,ui_timer=0,0,0,0,-99
 --camera values
-cam_x,cam_y,cam_spdx,cam_spdy,cam_gain=0,0,0,0,0.25
+draw_x,draw_y,cam_x,cam_y,cam_spdx,cam_spdy,cam_gain=0,0,0,0,0,0,0.25
 
 -- [entry point]
 
 function _init()
   frames,start_game_flash=0,0
   music(40,0,7)
-  --load_level(0)
   lvl_id=0
 end
 
@@ -1110,30 +1109,43 @@ function _draw()
   pal()
 
   -- start game flash
-  if is_title() and start_game then
-    for i=1,15 do
+  if is_title() then
+    if start_game then
+    	for i=1,15 do
       pal(i,start_game_flash>10 and (frames%10<5 and 7 or i) or (start_game_flash>5 and 2 or start_game_flash>0 and 1 or 0))
+    	end
     end
+    
+    cls()
+    
+    -- credits
+    sspr(72,32,56,32,36,32)
+    ?"🅾️/❎",55,80,5
+    ?"maddy thorson",40,96,5
+    ?"noel berry",46,102,5
+    
+    -- particles
+  		foreach(particles,draw_particle)
+    
+    return
   end
 
   -- draw bg color
   cls(flash_bg and frames/5 or new_bg and 2 or 0)
 
   -- bg clouds effect
-  if not is_title() then
-    foreach(clouds,function(c)
-      c.x+=c.spd-cam_spdx
-      rectfill(c.x,c.y,c.x+c.w,c.y+16-c.w*0.1875,new_bg and 14 or 1)
-      if c.x>128 then
-        c.x=-c.w
-        c.y=rnd(120)
-      end
-    end)
-  end
+  foreach(clouds,function(c)
+    c.x+=c.spd-cam_spdx
+    rectfill(c.x,c.y,c.x+c.w,c.y+16-c.w*0.1875,new_bg and 14 or 1)
+    if c.x>128 then
+      c.x=-c.w
+      c.y=rnd(120)
+    end
+  end)
 
   --set cam draw position
-  draw_x=is_title() and 0 or round(cam_x)-64
-  draw_y=is_title() and 0 or round(cam_y)-64
+  draw_x=round(cam_x)-64
+  draw_y=round(cam_y)-64
   camera(draw_x,draw_y)
 
   -- draw bg terrain
@@ -1162,19 +1174,7 @@ function _draw()
   end)
 
   -- particles
-  foreach(particles,function(p)
-    p.x+=p.spd-cam_spdx
-    p.y+=sin(p.off)-cam_spdy
-    p.off+=min(0.05,p.spd/32)
-    rectfill(p.x+draw_x,p.y%128+draw_y,p.x+p.s+draw_x,p.y%128+p.s+draw_y,p.c)
-    if p.x>132 then
-      p.x=-4
-      p.y=rnd128()
-    elseif p.x<-4 then
-      p.x=128
-      p.y=rnd128()
-    end
-  end)
+  foreach(particles,draw_particle)
 
   -- dead particles
   foreach(dead_particles,function(p)
@@ -1195,14 +1195,20 @@ function _draw()
     end
     ui_timer-=1
   end
+end
 
-  -- credits
-  if is_title() then
-    sspr(72,32,56,32,36,32)
-    ?"🅾️/❎",55,80,5
-    ?"maddy thorson",40,96,5
-    ?"noel berry",46,102,5
-  end
+function draw_particle(p)
+	p.x+=p.spd-cam_spdx
+ p.y+=sin(p.off)-cam_spdy
+ p.off+=min(0.05,p.spd/32)
+ rectfill(p.x+draw_x,p.y%128+draw_y,p.x+p.s+draw_x,p.y%128+p.s+draw_y,p.c)
+ if p.x>132 then
+   p.x=-4
+   p.y=rnd128()
+ elseif p.x<-4 then
+   p.x=128
+   p.y=rnd128()
+ end
 end
 
 function draw_object(obj)
