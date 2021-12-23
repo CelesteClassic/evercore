@@ -40,7 +40,7 @@ end
 
 function begin_game()
   max_djump=1
-  deaths,frames,seconds,minutes,music_timer,time_ticking,fruit_count=0,0,0,0,0,true,0
+  deaths,frames,seconds,minutes,music_timer,time_ticking,fruit_count,bg_col,cloud_col=0,0,0,0,0,true,0,0,1
   music(0,0,7)
   load_level(1)
 end
@@ -702,7 +702,8 @@ big_chest={
         this.state=2
         this.particles={}
         flash_bg=false
-        new_bg=true
+        bg_col=2
+        cloud_col=14
         init_object(orb,this.x+4,this.y+4,102)
         pause_player=false
       end
@@ -1131,12 +1132,12 @@ function _draw()
   end
 
   -- draw bg color
-  cls(flash_bg and frames/5 or new_bg and 2 or 0)
+  cls(flash_bg and frames/5 or bg_col)
 
   -- bg clouds effect
   foreach(clouds,function(c)
     c.x+=c.spd-cam_spdx
-    rectfill(c.x,c.y,c.x+c.w,c.y+16-c.w*0.1875,new_bg and 14 or 1)
+    rectfill(c.x,c.y,c.x+c.w,c.y+16-c.w*0.1875,cloud_col)
     if c.x>128 then
       c.x=-c.w
       c.y=rnd(120)
