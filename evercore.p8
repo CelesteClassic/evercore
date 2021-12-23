@@ -701,9 +701,7 @@ big_chest={
       if this.timer<0 then
         this.state=2
         this.particles={}
-        flash_bg=false
-        bg_col=2
-        cloud_col=14
+        flash_bg,bg_col,cloud_col=false,2,14
         init_object(orb,this.x+4,this.y+4,102)
         pause_player=false
       end
@@ -977,13 +975,12 @@ end
 
 function next_level()
   local next_lvl=lvl_id+1
-  if next_lvl==2 then
-    --old site music
-    music(20,500,7)
-  elseif next_lvl==3 then
-    --wind music
-    music(30,500,7)
+  
+  --check for music trigger
+  if music_switches[next_lvl] then
+    music(music_switches[next_lvl],500,7)
   end
+  
   load_level(next_lvl)
 end
 
@@ -1288,6 +1285,14 @@ levels={
 mapdata={
 	[3]="00000000000000000000000000000000000000000000000000000000000000000000000000003a00000000000000000000000000000010000039000000000000000000003a00280000380000000000000000000028672800001000390000000000000000283828760028672800000000000000002a28282123283829000000000000006838282125252328393a0000000000002a28212548252523283868000058586828292425252525261028286800281028380031322525482629002a2800002a28393f2123242532332000002800000021222225263133212223283928670100312525482522222525252310382821222324252525252525482525222223"
 }
+
+--list of music switch triggers
+--assigned levels will start the tracks set here
+music_switches={
+	[2]=20,
+	[3]=30
+}
+
 --@end
 
 --replace mapdata with hex
