@@ -51,15 +51,11 @@ end
 
 -- [effects]
 
-function rnd128()
-  return rnd(128)
-end
-
 clouds={}
 for i=0,16 do
   add(clouds,{
-    x=rnd128(),
-    y=rnd128(),
+    x=rnd"128",
+    y=rnd"128",
     spd=1+rnd(4),
   w=32+rnd(32)})
 end
@@ -67,8 +63,8 @@ end
 particles={}
 for i=0,24 do
   add(particles,{
-    x=rnd128(),
-    y=rnd128(),
+    x=rnd"128",
+    y=rnd"128",
     s=flr(rnd(1.25)),
     spd=0.25+rnd(5),
     off=rnd(),
@@ -1202,10 +1198,10 @@ function draw_particle(p)
  rectfill(p.x+draw_x,p.y%128+draw_y,p.x+p.s+draw_x,p.y%128+p.s+draw_y,p.c)
  if p.x>132 then
    p.x=-4
-   p.y=rnd128()
+   p.y=rnd"128"
  elseif p.x<-4 then
    p.x=128
-   p.y=rnd128()
+   p.y=rnd"128"
  end
 end
 
