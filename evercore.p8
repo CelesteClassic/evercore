@@ -56,8 +56,8 @@ for i=0,16 do
   add(clouds,{
     x=rnd"128",
     y=rnd"128",
-    spd=1+rnd(4),
-  w=32+rnd(32)})
+    spd=1+rnd"4",
+  w=32+rnd"32"})
 end
 
 particles={}
@@ -65,10 +65,10 @@ for i=0,24 do
   add(particles,{
     x=rnd"128",
     y=rnd"128",
-    s=flr(rnd(1.25)),
-    spd=0.25+rnd(5),
+    s=flr(rnd"1.25"),
+    spd=0.25+rnd"5",
     off=rnd(),
-    c=6+rnd(2),
+    c=6+rnd"2",
   })
 end
 
@@ -163,7 +163,7 @@ player={
       if h_input~=0 and this.is_solid(h_input,0) and not this.is_ice(h_input,0) then
         maxfall=0.4
         -- wall slide smoke
-        if rnd(10)<2 then
+        if rnd"10"<2 then
           this.init_smoke(h_input*6)
         end
       end
@@ -378,7 +378,7 @@ spring={
 
 balloon={
   init=function(this)
-    this.offset=rnd(100)
+    this.offset=rnd"100"
     this.start=this.y
     this.timer=0
     this.hitbox=rectangle(-1,-1,10,10)
@@ -463,9 +463,9 @@ end
 smoke={
   layer=3,
   init=function(this)
-    this.spd=vector(0.3+rnd(0.2),-0.1)
-    this.x+=-1+rnd(2)
-    this.y+=-1+rnd(2)
+    this.spd=vector(0.3+rnd"0.2",-0.1)
+    this.x+=-1+rnd"2"
+    this.y+=-1+rnd"2"
     this.flip=vector(maybe(),maybe())
   end,
   update=function(this)
@@ -617,7 +617,7 @@ chest={
   update=function(this)
     if has_key then
       this.timer-=1
-      this.x=this.start-1+rnd(3)
+      this.x=this.start-1+rnd"3"
       if this.timer<=0 then
         init_fruit(this,0,-4)
       end
@@ -689,10 +689,10 @@ big_chest={
       flash_bg=true
       if this.timer<=45 and #this.particles<50 then
         add(this.particles,{
-          x=1+rnd(14),
+          x=1+rnd"14",
           y=0,
-          h=32+rnd(32),
-        spd=8+rnd(8)})
+          h=32+rnd"32",
+        spd=8+rnd"8"})
       end
       if this.timer<0 then
         this.state=2
@@ -1133,7 +1133,7 @@ function _draw()
     rectfill(c.x,c.y,c.x+c.w,c.y+16-c.w*0.1875,cloud_col)
     if c.x>128 then
       c.x=-c.w
-      c.y=rnd(120)
+      c.y=rnd"120"
     end
   end)
 
