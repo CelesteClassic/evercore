@@ -563,6 +563,7 @@ fake_wall={
   check_fruit=true,
   init=function(this)
     this.solid_obj=true
+    this.hitbox=rectangle(0,0,16,16)
   end,
   update=function(this)
     this.hitbox=rectangle(-1,-1,18,18)
