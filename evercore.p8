@@ -466,7 +466,7 @@ smoke={
     this.spd=vector(0.3+rnd"0.2",-0.1)
     this.x+=-1+rnd"2"
     this.y+=-1+rnd"2"
-    this.flip=vector(maybe(),maybe())
+    this.flip=vector(rnd()<0.5,rnd()<0.5)
   end,
   update=function(this)
     this.spr+=0.2
@@ -1241,10 +1241,6 @@ end
 
 function sign(v)
   return v~=0 and sgn(v) or 0
-end
-
-function maybe()
-  return rnd()<0.5
 end
 
 function tile_at(x,y)
