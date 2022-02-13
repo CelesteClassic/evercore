@@ -273,7 +273,7 @@ end
 
 function draw_hair(obj)
   local last=vector(obj.x+(obj.flip.x and 6 or 2),obj.y+(btn(⬇️) and 4 or 3))
-  for i,h in pairs(obj.hair) do
+  for i,h in ipairs(obj.hair) do
     h.x+=(last.x-h.x)/1.5
     h.y+=(last.y+0.5-h.y)/1.5
     circfill(h.x,h.y,mid(4-i,1,2),8)
@@ -655,7 +655,7 @@ message={
   end,
   draw=function(this)
     if this.player_here() then
-      for i,s in pairs(split(this.text,"#")) do
+      for i,s in ipairs(split(this.text,"#")) do
         camera()
         rectfill(7,7*i,120,7*i+6,7)
         ?s,64-#s*2,7*i+1,0
