@@ -1003,7 +1003,10 @@ function load_level(id)
 
   --set level globals
   local tbl=split(levels[lvl_id])
-  lvl_x,lvl_y,lvl_w,lvl_h,lvl_title=tbl[1]*16,tbl[2]*16,tbl[3]*16,tbl[4]*16,tbl[5]
+  for i=1,4 do
+    _ENV[split"lvl_x,lvl_y,lvl_w,lvl_h"[i]]=tbl[i]*16
+  end
+  lvl_title=tbl[5]
   lvl_pw,lvl_ph=lvl_w*8,lvl_h*8
 
 
