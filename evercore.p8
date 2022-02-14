@@ -987,7 +987,7 @@ function next_level()
 end
 
 function load_level(id)
-  has_dashed,has_key= --false,false
+  has_dashed,has_key= false--,false
 
 
   --remove existing objects
