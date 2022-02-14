@@ -767,7 +767,7 @@ flag={
   end
 }
 
-psfx=function(num)
+function psfx(num)
   if sfx_timer<=0 then
     sfx(num)
   end
