@@ -1116,7 +1116,7 @@ function _draw()
     cls()
 
     -- credits
-    sspr(72,32,56,32,36,32)
+    sspr(unpack(split"72,32,56,32,36,32"))
     ?"🅾️/❎",55,80,5
     ?"maddy thorson",40,96,5
     ?"noel berry",46,102,5
