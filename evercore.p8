@@ -987,8 +987,7 @@ function next_level()
 end
 
 function load_level(id)
-  has_dashed=false
-  has_key=false
+  has_dashed,has_key= --false,false
 
 
   --remove existing objects
@@ -1005,8 +1004,7 @@ function load_level(id)
   --set level globals
   local tbl=split(levels[lvl_id])
   lvl_x,lvl_y,lvl_w,lvl_h,lvl_title=tbl[1]*16,tbl[2]*16,tbl[3]*16,tbl[4]*16,tbl[5]
-  lvl_pw=lvl_w*8
-  lvl_ph=lvl_h*8
+  lvl_pw,lvl_ph=lvl_w*8,lvl_h*8
 
 
   --level title setup
@@ -1024,7 +1022,7 @@ function load_level(id)
   -- entities
   for tx=0,lvl_w-1 do
     for ty=0,lvl_h-1 do
-      local tile=mget(lvl_x+tx,lvl_y+ty)
+      local tile=tile_at(tx,ty)
       if tiles[tile] then
         init_object(tiles[tile],tx*8,ty*8,tile)
       end
@@ -1079,7 +1077,6 @@ function _update()
   foreach(objects,function(obj)
     if obj.type==player or obj.type==player_spawn then
       move_camera(obj)
-      return
     end
   end)
 
@@ -1112,7 +1109,7 @@ function _draw()
   if is_title() then
     if start_game then
     	for i=1,15 do
-      pal(i,start_game_flash>10 and (frames%10<5 and 7 or i) or (start_game_flash>5 and 2 or start_game_flash>0 and 1 or 0))
+        pal(i, start_game_flash<=10 and ceil(max(start_game_flash)/5) or frames%10<5 and 7 or i)
     	end
     end
 
