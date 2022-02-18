@@ -125,7 +125,7 @@ player={
     if on_ground then
       this.grace=6
       if this.djump<max_djump then
-        psfx(54)
+        psfx"54"
         this.djump=max_djump
       end
     elseif this.grace>0 then
@@ -177,7 +177,7 @@ player={
       if this.jbuffer>0 then
         if this.grace>0 then
           -- normal jump
-          psfx(1)
+          psfx"1"
           this.jbuffer=0
           this.grace=0
           this.spd.y=-2
@@ -186,7 +186,7 @@ player={
           -- wall jump
           local wall_dir=(this.is_solid(-3,0) and -1 or this.is_solid(3,0) and 1 or 0)
           if wall_dir~=0 then
-            psfx(2)
+            psfx"2"
             this.jbuffer=0
             this.spd=vector(wall_dir*(-1-maxrun),-2)
             if not this.is_ice(wall_dir*3,0) then
@@ -215,7 +215,7 @@ player={
           (v_input~=0 and 0 or this.flip.x and -1 or 1)
         ,v_input~=0 and v_input*(h_input~=0 and d_half or d_full) or 0)
         -- effects
-        psfx(3)
+        psfx"3"
         freeze=2
         -- dash target speeds and accels
         this.dash_target_x=2*sign(this.spd.x)
@@ -224,7 +224,7 @@ player={
         this.dash_accel_y=this.spd.x==0 and 1.5 or 1.06066017177
       elseif this.djump<=0 and dash then
         -- failed dash smoke
-        psfx(9)
+        psfx"9"
         this.init_smoke()
       end
     end
@@ -273,7 +273,7 @@ end
 
 function draw_hair(obj)
   local last=vector(obj.x+(obj.flip.x and 6 or 2),obj.y+(btn(⬇️) and 4 or 3))
-  for i,h in pairs(obj.hair) do
+  for i,h in ipairs(obj.hair) do
     h.x+=(last.x-h.x)/1.5
     h.y+=(last.y+0.5-h.y)/1.5
     circfill(h.x,h.y,mid(4-i,1,2),8)
@@ -286,7 +286,7 @@ end
 player_spawn={
   layer=2,
   init=function(this)
-    sfx(4)
+    sfx"4"
     this.spr=3
     this.target=this.y
     this.y=min(this.y+48,lvl_ph)
@@ -317,7 +317,7 @@ player_spawn={
           this.state=2
           this.delay=5
           this.init_smoke(0,4)
-          sfx(5)
+          sfx"5"
         end
       end
       -- landing and spawning player object
@@ -357,7 +357,7 @@ spring={
         this.init_smoke()
         -- crumble below spring
         break_fall_floor(this.check(fall_floor,0,1) or {})
-        psfx(8)
+        psfx"8"
       end
     elseif this.delay>0 then
       this.delay-=1
@@ -378,18 +378,18 @@ spring={
 
 balloon={
   init=function(this)
-    this.offset=rnd"100"
+    this.offset=rnd()
     this.start=this.y
     this.timer=0
     this.hitbox=rectangle(-1,-1,10,10)
   end,
   update=function(this)
     if this.spr==22 then
-      this.offset=(this.offset+1)%100
-      this.y=this.start+sin(this.offset/100)*2
+      this.offset+=0.01
+      this.y=this.start+sin(this.offset)*2
       local hit=this.player_here()
       if hit and hit.djump<max_djump then
-        psfx(6)
+        psfx"6"
         this.init_smoke()
         hit.djump=max_djump
         this.spr=0
@@ -398,7 +398,7 @@ balloon={
     elseif this.timer>0 then
       this.timer-=1
     else
-      psfx(7)
+      psfx"7"
       this.init_smoke()
       this.spr=22
     end
@@ -406,7 +406,7 @@ balloon={
   draw=function(this)
     if this.spr==22 then
       for i=7,13 do
-        pset(this.x+4+sin(this.offset/50+i/10),this.y+i,6)
+        pset(this.x+4+sin(this.offset*2+i/10),this.y+i,6)
       end
       draw_obj_sprite(this)
     end
@@ -422,10 +422,10 @@ fall_floor={
     -- idling
     if this.state==0 then
       for i=0,2 do
-        if this.check(player,i-1,-(i%2)) then 
+        if this.check(player,i-1,-(i%2)) then
           break_fall_floor(this)
         end
-      end 
+      end
     -- shaking
     elseif this.state==1 then
       this.delay-=1
@@ -438,7 +438,7 @@ fall_floor={
     elseif this.state==2 then
       this.delay-=1
       if this.delay<=0 and not this.player_here() then
-        psfx(7)
+        psfx"7"
         this.state=0
         this.collideable=true
         this.init_smoke()
@@ -452,7 +452,7 @@ fall_floor={
 
 function break_fall_floor(obj)
   if obj.state==0 then
-    psfx(15)
+    psfx"15"
     obj.state=1
     obj.delay=15--how long until it falls
     obj.init_smoke();
@@ -466,7 +466,7 @@ smoke={
     this.spd=vector(0.3+rnd"0.2",-0.1)
     this.x+=-1+rnd"2"
     this.y+=-1+rnd"2"
-    this.flip=vector(maybe(),maybe())
+    this.flip=vector(rnd()<0.5,rnd()<0.5)
   end,
   update=function(this)
     this.spr+=0.2
@@ -503,7 +503,7 @@ fly_fruit={
         this.sfx_delay-=1
         if this.sfx_delay<=0 then
           sfx_timer=20
-          sfx(14)
+          sfx"14"
         end
       end
       this.spd.y=appr(this.spd.y,-3.5,0.25)
@@ -531,13 +531,13 @@ function check_fruit(this)
   if hit then
     hit.djump=max_djump
     sfx_timer=20
-    sfx(13)
+    sfx"13"
     got_fruit[this.fruit_id]=true
     init_object(lifeup,this.x,this.y)
     destroy_object(this)
-    if time_ticking then 
+    if time_ticking then
       fruit_count+=1
-    end 
+    end
   end
 end
 
@@ -563,6 +563,7 @@ fake_wall={
   check_fruit=true,
   init=function(this)
     this.solid_obj=true
+    this.hitbox=rectangle(0,0,16,16)
   end,
   update=function(this)
     this.hitbox=rectangle(-1,-1,18,18)
@@ -587,7 +588,7 @@ fake_wall={
 
 function init_fruit(this,ox,oy)
   sfx_timer=20
-  sfx(16)
+  sfx"16"
   init_object(fruit,this.x+ox,this.y+oy,26).fruit_id=this.fruit_id
   destroy_object(this)
 end
@@ -599,7 +600,7 @@ key={
       this.flip.x=not this.flip.x
     end
     if this.player_here() then
-      sfx(23)
+      sfx"23"
       sfx_timer=10
       destroy_object(this)
       has_key=true
@@ -655,7 +656,7 @@ message={
   end,
   draw=function(this)
     if this.player_here() then
-      for i,s in pairs(split(this.text,"#")) do
+      for i,s in ipairs(split(this.text,"#")) do
         camera()
         rectfill(7,7*i,120,7*i+6,7)
         ?s,64-#s*2,7*i+1,0
@@ -675,7 +676,7 @@ big_chest={
       local hit=this.check(player,0,8)
       if hit and hit.is_solid(0,1) then
         music(-1,500,7)
-        sfx(37)
+        sfx"37"
         pause_player=true
         hit.spd=vector(0,0)
         this.state=1
@@ -722,12 +723,12 @@ orb={
   init=function(this)
     this.spd.y=-4
   end,
-  update=function(this) 
+  update=function(this)
     this.spd.y=appr(this.spd.y,0,0.5)
     local hit=this.player_here()
     if this.spd.y==0 and hit then
       music_timer=45
-      sfx(51)
+      sfx"51"
       freeze=10
       destroy_object(this)
       max_djump=2
@@ -748,7 +749,7 @@ flag={
   end,
   update=function(this)
     if not this.show and this.player_here() then
-      sfx(55)
+      sfx"55"
       sfx_timer,this.show,time_ticking=30,true,false
     end
   end,
@@ -766,36 +767,41 @@ flag={
   end
 }
 
-psfx=function(num)
+function psfx(num)
   if sfx_timer<=0 then
     sfx(num)
   end
 end
 
 -- [tile dict]
-tiles={
-  [1]=player_spawn,
-  [8]=key,
-  [11]=platform,
-  [12]=platform,
-  [18]=spring,
-  [20]=chest,
-  [22]=balloon,
-  [23]=fall_floor,
-  [26]=fruit,
-  [45]=fly_fruit,
-  [64]=fake_wall,
-  [86]=message,
-  [96]=big_chest,
-  [118]=flag
-}
+tiles={}
+foreach(split([[
+1,player_spawn
+8,key
+11,platform
+12,platform
+18,spring
+20,chest
+22,balloon
+23,fall_floor
+26,fruit
+45,fly_fruit
+64,fake_wall
+86,message
+96,big_chest
+118,flag
+]],"\n"),function(t)
+ local tile,obj=unpack(split(t))
+ tiles[tile]=_ENV[obj]
+end)
+
 
 -- [object functions]
 
 function init_object(type,x,y,tile)
   --generate and check berry id
   local id=x..","..y..","..lvl_id
-  if type.check_fruit and got_fruit[id] then 
+  if type.check_fruit and got_fruit[id] then
     return
   end
 
@@ -819,11 +825,11 @@ function init_object(type,x,y,tile)
   function obj.bottom() return obj.top()+obj.hitbox.h-1 end
 
   function obj.is_solid(ox,oy)
-    for o in all(objects) do 
-      if o!=obj and (o.solid_obj or o.semisolid_obj and not obj.objcollide(o,ox,0) and oy>0) and obj.objcollide(o,ox,oy) then 
-        return true 
-      end 
-    end 
+    for o in all(objects) do
+      if o!=obj and (o.solid_obj or o.semisolid_obj and not obj.objcollide(o,ox,0) and oy>0) and obj.objcollide(o,ox,oy) then
+        return true
+      end
+    end
     return obj.is_flag(ox,oy,0) -- solid terrain
   end
 
@@ -841,11 +847,11 @@ function init_object(type,x,y,tile)
     end
   end
 
-  function obj.objcollide(other,ox,oy) 
+  function obj.objcollide(other,ox,oy)
     return other.collideable and
-    other.right()>=obj.left()+ox and 
+    other.right()>=obj.left()+ox and
     other.bottom()>=obj.top()+oy and
-    other.left()<=obj.right()+ox and 
+    other.left()<=obj.right()+ox and
     other.top()<=obj.bottom()+oy
   end
 
@@ -883,33 +889,33 @@ function init_object(type,x,y,tile)
         end
         movamt=obj[axis]-p --save how many px moved to use later for solids
       else
-        movamt=amt 
-        if (obj.solid_obj or obj.semisolid_obj) and upmoving and riding then 
+        movamt=amt
+        if (obj.solid_obj or obj.semisolid_obj) and upmoving and riding then
           movamt+=obj.top()-riding.bottom()-1
           local hamt=round(riding.spd.y+riding.rem.y)
           hamt+=sign(hamt)
-          if movamt<hamt then 
+          if movamt<hamt then
             riding.spd.y=max(riding.spd.y,0)
-          else 
+          else
             movamt=0
           end
         end
         obj[axis]+=amt
       end
       if (obj.solid_obj or obj.semisolid_obj) and obj.collideable then
-        obj.collideable=false 
+        obj.collideable=false
         local hit=obj.player_here()
-        if hit and obj.solid_obj then 
-          hit.move(axis=="x" and (amt>0 and obj.right()+1-hit.left() or amt<0 and obj.left()-hit.right()-1) or 0, 
+        if hit and obj.solid_obj then
+          hit.move(axis=="x" and (amt>0 and obj.right()+1-hit.left() or amt<0 and obj.left()-hit.right()-1) or 0,
                   axis=="y" and (amt>0 and obj.bottom()+1-hit.top() or amt<0 and obj.top()-hit.bottom()-1) or 0,
                   1)
-          if obj.player_here() then 
+          if obj.player_here() then
             kill_player(hit)
-          end 
-        elseif riding then 
+          end
+        elseif riding then
           riding.move(axis=="x" and movamt or 0, axis=="y" and movamt or 0,1)
         end
-        obj.collideable=true 
+        obj.collideable=true
       end
     end
   end
@@ -931,7 +937,7 @@ end
 
 function kill_player(obj)
   sfx_timer=12
-  sfx(0)
+  sfx"0"
   deaths+=1
   destroy_object(obj)
   --dead_particles={}
@@ -971,18 +977,17 @@ end
 
 function next_level()
   local next_lvl=lvl_id+1
-  
+
   --check for music trigger
   if music_switches[next_lvl] then
     music(music_switches[next_lvl],500,7)
   end
-  
+
   load_level(next_lvl)
 end
 
 function load_level(id)
-  has_dashed=false
-  has_key=false
+  has_dashed,has_key= false--,false
 
 
   --remove existing objects
@@ -998,27 +1003,29 @@ function load_level(id)
 
   --set level globals
   local tbl=split(levels[lvl_id])
-  lvl_x,lvl_y,lvl_w,lvl_h,lvl_title=tbl[1]*16,tbl[2]*16,tbl[3]*16,tbl[4]*16,tbl[5]
-  lvl_pw=lvl_w*8
-  lvl_ph=lvl_h*8
+  for i=1,4 do
+    _ENV[split"lvl_x,lvl_y,lvl_w,lvl_h"[i]]=tbl[i]*16
+  end
+  lvl_title=tbl[5]
+  lvl_pw,lvl_ph=lvl_w*8,lvl_h*8
 
 
   --level title setup
     ui_timer=5
 
   --reload map
-  if diff_level then 
+  if diff_level then
     reload()
     --chcek for mapdata strings
     if mapdata[lvl_id] then
       replace_mapdata(lvl_x,lvl_y,lvl_w,lvl_h,mapdata[lvl_id])
     end
-  end 
+  end
 
   -- entities
   for tx=0,lvl_w-1 do
     for ty=0,lvl_h-1 do
-      local tile=mget(lvl_x+tx,lvl_y+ty)
+      local tile=tile_at(tx,ty)
       if tiles[tile] then
         init_object(tiles[tile],tx*8,ty*8,tile)
       end
@@ -1073,7 +1080,6 @@ function _update()
   foreach(objects,function(obj)
     if obj.type==player or obj.type==player_spawn then
       move_camera(obj)
-      return
     end
   end)
 
@@ -1085,9 +1091,9 @@ function _update()
         begin_game()
       end
     elseif btn(🅾️) or btn(❎) then
-      music(-1)
+      music"-1"
       start_game_flash,start_game=50,true
-      sfx(38)
+      sfx"38"
     end
   end
 end
@@ -1106,21 +1112,21 @@ function _draw()
   if is_title() then
     if start_game then
     	for i=1,15 do
-      pal(i,start_game_flash>10 and (frames%10<5 and 7 or i) or (start_game_flash>5 and 2 or start_game_flash>0 and 1 or 0))
+        pal(i, start_game_flash<=10 and ceil(max(start_game_flash)/5) or frames%10<5 and 7 or i)
     	end
     end
-    
+
     cls()
-    
+
     -- credits
-    sspr(72,32,56,32,36,32)
+    sspr(unpack(split"72,32,56,32,36,32"))
     ?"🅾️/❎",55,80,5
     ?"maddy thorson",40,96,5
     ?"noel berry",46,102,5
-    
+
     -- particles
   		foreach(particles,draw_particle)
-    
+
     return
   end
 
@@ -1243,10 +1249,6 @@ function sign(v)
   return v~=0 and sgn(v) or 0
 end
 
-function maybe()
-  return rnd()<0.5
-end
-
 function tile_at(x,y)
   return mget(lvl_x+x,lvl_y+y)
 end
@@ -1258,8 +1260,8 @@ function spikes_at(x1,y1,x2,y2,xspd,yspd)
           [27]=y1%8<=2 and yspd<=0,
           [43]=x1%8<=2 and xspd<=0,
           [59]=x2%8>=6 and xspd>=0})[tile_at(i,j)] then
-            return true 
-      end 
+            return true
+      end
     end
   end
 end
@@ -1293,39 +1295,32 @@ music_switches={
 
 --replace mapdata with hex
 function replace_mapdata(x,y,w,h,data)
-  for y_=0,h*2-1,2 do
-    local offset=y*2+y_<64 and 8192 or 0
-    for x_=1,w*2,2 do
-      local i=x_+y_*w
-      poke(offset+x+y*128+y_*64+x_/2,"0x"..sub(data,i,i+1))
-    end
+  for i=1,#data,2 do
+    mset(x+i\2%w,y+i\2\w,"0x"..sub(data,i,i+1))
   end
 end
 
 --[[
- 
+
 short on tokens?
 everything below this comment
 is just for grabbing data
 rather than loading it
 and can be safely removed!
- 
+
 --]]
 
 --copy mapdata string to clipboard
 function get_mapdata(x,y,w,h)
   local reserve=""
-  for y_=0,h*2-1,2 do
-    local offset=y*2+y_<64 and 8192 or 0
-    for x_=1,w*2,2 do
-      reserve=reserve..num2hex(peek(offset+x+y*128+y_*64+x_/2))
-    end
+  for i=0,w*h-1 do
+    reserve..=num2hex(mget(i%w,i\w))
   end
   printh(reserve,"@clip")
 end
 
 --convert mapdata to memory data
-function num2hex(v) 
+function num2hex(v)
   return sub(tostr(v,true),5,6)
 end
 __gfx__
