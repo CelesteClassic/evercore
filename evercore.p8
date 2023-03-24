@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 34
+version 41
 __lua__
 --~evercore~
 --a celeste classic mod base
@@ -290,7 +290,7 @@ player_spawn={
     this.spr=3
     this.target=this.y
     this.y=min(this.y+48,lvl_ph)
-    cam_x,cam_y=mid(this.x,64,lvl_pw-64),mid(this.y,64,lvl_ph-64)
+    cam_x,cam_y=mid(this.x+4,64,lvl_pw-64),mid(this.y,64,lvl_ph-64)
     this.spd.y=-4
     this.state=0
     this.delay=0
