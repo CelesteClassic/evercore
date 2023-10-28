@@ -1016,7 +1016,7 @@ function load_level(id)
   --reload map
   if diff_level then
     reload()
-    --chcek for mapdata strings
+    --check for mapdata strings
     if mapdata[lvl_id] then
       replace_mapdata(lvl_x,lvl_y,lvl_w,lvl_h,mapdata[lvl_id])
     end
