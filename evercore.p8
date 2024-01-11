@@ -74,7 +74,200 @@ end
 
 dead_particles={}
 
--- [player entity]
+-- [update loop]
+
+function _update()
+	frames+=1
+	if time_ticking then
+		seconds+=frames\30
+		minutes+=seconds\60
+		seconds%=60
+	end
+	frames%=30
+
+	if music_timer>0 then
+		music_timer-=1
+		if music_timer<=0 then
+			music(10,0,7)
+		end
+	end
+
+	if sfx_timer>0 then
+		sfx_timer-=1
+	end
+
+	-- cancel if freeze
+	if freeze>0 then
+		freeze-=1
+		return
+	end
+
+	-- restart (soon)
+	if delay_restart>0 then
+		cam_spdx,cam_spdy=0,0
+		delay_restart-=1
+		if delay_restart==0 then
+			load_level(lvl_id)
+		end
+	end
+
+	-- update each object
+	foreach(objects,function(obj)
+		obj.move(obj.spd.x,obj.spd.y,0);
+		(obj.type.update or stat)(obj)
+	end)
+
+	--move camera to player
+	foreach(objects,function(obj)
+		if obj.type==player or obj.type==player_spawn then
+			move_camera(obj)
+		end
+	end)
+
+	-- start game
+	if is_title() then
+		if start_game then
+			start_game_flash-=1
+			if start_game_flash<=-30 then
+				begin_game()
+			end
+		elseif btn(🅾️) or btn(❎) then
+			music"-1"
+			start_game_flash,start_game=50,true
+			sfx"38"
+		end
+	end
+end
+
+-- [draw loop]
+
+function _draw()
+	if freeze>0 then
+		return
+	end
+
+	-- reset all palette values
+	pal()
+
+	-- start game flash
+	if is_title() then
+		if start_game then
+			for i=1,15 do
+				pal(i, start_game_flash<=10 and ceil(max(start_game_flash)/5) or frames%10<5 and 7 or i)
+			end
+		end
+
+		cls()
+
+		-- credits
+		sspr(unpack(split"72,32,56,32,36,32"))
+		?"🅾️/❎",55,80,5
+		?"maddy thorson",40,96,5
+		?"noel berry",46,102,5
+
+		-- particles
+			foreach(particles,draw_particle)
+
+		return
+	end
+
+	-- draw bg color
+	cls(flash_bg and frames/5 or bg_col)
+
+	-- bg clouds effect
+	foreach(clouds,function(c)
+		c.x+=c.spd-cam_spdx
+		rectfill(c.x,c.y,c.x+c.w,c.y+16-c.w*0.1875,cloud_col)
+		if c.x>128 then
+			c.x=-c.w
+			c.y=rnd"120"
+		end
+	end)
+
+	--set cam draw position
+	draw_x=round(cam_x)-64
+	draw_y=round(cam_y)-64
+	camera(draw_x,draw_y)
+
+	-- draw bg terrain
+	map(lvl_x,lvl_y,0,0,lvl_w,lvl_h,4)
+
+	--set draw layering
+	--0: background layer
+	--1: default layer
+	--2: player layer
+	--3: foreground layer
+	local layers={{},{},{}}
+	foreach(objects,function(o)
+		if o.type.layer==0 then
+			draw_object(o) --draw below terrain
+		else
+			add(layers[o.type.layer or 1],o) --add object to layer, default draw below player
+		end
+	end)
+
+	-- draw terrain
+	map(lvl_x,lvl_y,0,0,lvl_w,lvl_h,2)
+
+	-- draw objects
+	foreach(layers,function(l)
+		foreach(l,draw_object)
+	end)
+	
+	-- draw jumpthroughs
+	map(lvl_x,lvl_y,0,0,lvl_w,lvl_h,8)
+
+	-- particles
+	foreach(particles,draw_particle)
+
+	-- dead particles
+	foreach(dead_particles,function(p)
+		p.x+=p.dx
+		p.y+=p.dy
+		p.t-=0.2
+		if p.t<=0 then
+			del(dead_particles,p)
+		end
+		rectfill(p.x-p.t,p.y-p.t,p.x+p.t,p.y+p.t,14+5*p.t%2)
+	end)
+
+	-- draw level title
+	camera()
+	if ui_timer>=-30 then
+		if ui_timer<0 then
+			draw_ui()
+		end
+		ui_timer-=1
+	end
+end
+
+function draw_particle(p)
+	p.x+=p.spd-cam_spdx
+ p.y+=sin(p.off)-cam_spdy
+ p.off+=min(0.05,p.spd/32)
+ rectfill(p.x+draw_x,p.y%128+draw_y,p.x+p.s+draw_x,p.y%128+p.s+draw_y,p.c)
+ if p.x>132 then
+	 p.x=-4
+	 p.y=rnd"128"
+ elseif p.x<-4 then
+	 p.x=128
+	 p.y=rnd"128"
+ end
+end
+
+function draw_time(x,y)
+	rectfill(x,y,x+32,y+6,0)
+	?two_digit_str(minutes\60)..":"..two_digit_str(minutes%60)..":"..two_digit_str(seconds),x+1,y+1,7
+end
+
+function draw_ui()
+	rectfill(24,58,104,70,0)
+	local title=lvl_title or lvl_id.."00 m"
+	?title,64-#title*2,62,7
+	draw_time(4,4)
+end
+-->8
+-- [player]
 
 player={
 	layer=2,
@@ -281,7 +474,23 @@ function draw_hair(obj)
 	end
 end
 
--- [other objects]
+function kill_player(obj)
+	sfx_timer=12
+	sfx"0"
+	deaths+=1
+	destroy_object(obj)
+	--dead_particles={}
+	for dir=0,0.875,0.125 do
+		add(dead_particles,{
+			x=obj.x+4,
+			y=obj.y+4,
+			t=2,
+			dx=sin(dir)*3,
+			dy=cos(dir)*3
+		})
+	end
+	delay_restart=15
+end
 
 player_spawn={
 	layer=2,
@@ -332,6 +541,8 @@ player_spawn={
 	end,
 	draw= player.draw
 }
+-->8
+-- [objects]
 
 spring={
 	init=function(this)
@@ -766,37 +977,8 @@ flag={
 		end
 	end
 }
-
-function psfx(num)
-	if sfx_timer<=0 then
-		sfx(num)
-	end
-end
-
--- [tile dict]
-tiles={}
-foreach(split([[
-1,player_spawn
-8,key
-11,platform
-12,platform
-18,spring
-20,chest
-22,balloon
-23,fall_floor
-26,fruit
-45,fly_fruit
-64,fake_wall
-86,message
-96,big_chest
-118,flag
-]],"\n"),function(t)
- local tile,obj=unpack(split(t))
- tiles[tile]=_ENV[obj]
-end)
-
-
--- [object functions]
+-->8
+-- [object class]
 
 function init_object(type,x,y,tile)
 	--generate and check berry id
@@ -936,24 +1118,6 @@ function destroy_object(obj)
 	del(objects,obj)
 end
 
-function kill_player(obj)
-	sfx_timer=12
-	sfx"0"
-	deaths+=1
-	destroy_object(obj)
-	--dead_particles={}
-	for dir=0,0.875,0.125 do
-		add(dead_particles,{
-			x=obj.x+4,
-			y=obj.y+4,
-			t=2,
-			dx=sin(dir)*3,
-			dy=cos(dir)*3
-		})
-	end
-	delay_restart=15
-end
-
 function move_camera(obj)
 	cam_spdx=cam_gain*(4+obj.x-cam_x)
 	cam_spdy=cam_gain*(4+obj.y-cam_y)
@@ -974,7 +1138,15 @@ function move_camera(obj)
 	end
 end
 
--- [level functions]
+function draw_object(obj)
+	(obj.type.draw or draw_obj_sprite)(obj)
+end
+
+function draw_obj_sprite(obj)
+	spr(obj.spr,obj.x,obj.y,1,1,obj.flip.x,obj.flip.y)
+end
+-->8
+-- [level loading]
 
 function next_level()
 	local next_lvl=lvl_id+1
@@ -988,8 +1160,7 @@ function next_level()
 end
 
 function load_level(id)
-	has_dashed,has_key= false--,false
-
+	has_dashed,has_key= false
 
 	--remove existing objects
 	foreach(objects,destroy_object)
@@ -1010,9 +1181,8 @@ function load_level(id)
 	lvl_title=tbl[5]
 	lvl_pw,lvl_ph=lvl_w*8,lvl_h*8
 
-
 	--level title setup
-		ui_timer=5
+	ui_timer=5
 
 	--reload map
 	if diff_level then
@@ -1034,212 +1204,20 @@ function load_level(id)
 	end
 end
 
--- [main update loop]
-
-function _update()
-	frames+=1
-	if time_ticking then
-		seconds+=frames\30
-		minutes+=seconds\60
-		seconds%=60
-	end
-	frames%=30
-
-	if music_timer>0 then
-		music_timer-=1
-		if music_timer<=0 then
-			music(10,0,7)
-		end
-	end
-
-	if sfx_timer>0 then
-		sfx_timer-=1
-	end
-
-	-- cancel if freeze
-	if freeze>0 then
-		freeze-=1
-		return
-	end
-
-	-- restart (soon)
-	if delay_restart>0 then
-		cam_spdx,cam_spdy=0,0
-		delay_restart-=1
-		if delay_restart==0 then
-			load_level(lvl_id)
-		end
-	end
-
-	-- update each object
-	foreach(objects,function(obj)
-		obj.move(obj.spd.x,obj.spd.y,0);
-		(obj.type.update or stat)(obj)
-	end)
-
-	--move camera to player
-	foreach(objects,function(obj)
-		if obj.type==player or obj.type==player_spawn then
-			move_camera(obj)
-		end
-	end)
-
-	-- start game
-	if is_title() then
-		if start_game then
-			start_game_flash-=1
-			if start_game_flash<=-30 then
-				begin_game()
-			end
-		elseif btn(🅾️) or btn(❎) then
-			music"-1"
-			start_game_flash,start_game=50,true
-			sfx"38"
-		end
+--replace mapdata with hex
+function replace_mapdata(x,y,w,h,data)
+	for i=1,#data,2 do
+		mset(x+i\2%w,y+i\2\w,"0x"..sub(data,i,i+1))
 	end
 end
-
--- [drawing functions]
-
-function _draw()
-	if freeze>0 then
-		return
-	end
-
-	-- reset all palette values
-	pal()
-
-	-- start game flash
-	if is_title() then
-		if start_game then
-			for i=1,15 do
-				pal(i, start_game_flash<=10 and ceil(max(start_game_flash)/5) or frames%10<5 and 7 or i)
-			end
-		end
-
-		cls()
-
-		-- credits
-		sspr(unpack(split"72,32,56,32,36,32"))
-		?"🅾️/❎",55,80,5
-		?"maddy thorson",40,96,5
-		?"noel berry",46,102,5
-
-		-- particles
-			foreach(particles,draw_particle)
-
-		return
-	end
-
-	-- draw bg color
-	cls(flash_bg and frames/5 or bg_col)
-
-	-- bg clouds effect
-	foreach(clouds,function(c)
-		c.x+=c.spd-cam_spdx
-		rectfill(c.x,c.y,c.x+c.w,c.y+16-c.w*0.1875,cloud_col)
-		if c.x>128 then
-			c.x=-c.w
-			c.y=rnd"120"
-		end
-	end)
-
-	--set cam draw position
-	draw_x=round(cam_x)-64
-	draw_y=round(cam_y)-64
-	camera(draw_x,draw_y)
-
-	-- draw bg terrain
-	map(lvl_x,lvl_y,0,0,lvl_w,lvl_h,4)
-
-	--set draw layering
-	--0: background layer
-	--1: default layer
-	--2: player layer
-	--3: foreground layer
-	local layers={{},{},{}}
-	foreach(objects,function(o)
-		if o.type.layer==0 then
-			draw_object(o) --draw below terrain
-		else
-			add(layers[o.type.layer or 1],o) --add object to layer, default draw below player
-		end
-	end)
-
-	-- draw terrain
-	map(lvl_x,lvl_y,0,0,lvl_w,lvl_h,2)
-
-	-- draw objects
-	foreach(layers,function(l)
-		foreach(l,draw_object)
-	end)
-	
-	-- draw jumpthroughs
-	map(lvl_x,lvl_y,0,0,lvl_w,lvl_h,8)
-
-	-- particles
-	foreach(particles,draw_particle)
-
-	-- dead particles
-	foreach(dead_particles,function(p)
-		p.x+=p.dx
-		p.y+=p.dy
-		p.t-=0.2
-		if p.t<=0 then
-			del(dead_particles,p)
-		end
-		rectfill(p.x-p.t,p.y-p.t,p.x+p.t,p.y+p.t,14+5*p.t%2)
-	end)
-
-	-- draw level title
-	camera()
-	if ui_timer>=-30 then
-		if ui_timer<0 then
-			draw_ui()
-		end
-		ui_timer-=1
-	end
-end
-
-function draw_particle(p)
-	p.x+=p.spd-cam_spdx
- p.y+=sin(p.off)-cam_spdy
- p.off+=min(0.05,p.spd/32)
- rectfill(p.x+draw_x,p.y%128+draw_y,p.x+p.s+draw_x,p.y%128+p.s+draw_y,p.c)
- if p.x>132 then
-	 p.x=-4
-	 p.y=rnd"128"
- elseif p.x<-4 then
-	 p.x=128
-	 p.y=rnd"128"
- end
-end
-
-function draw_object(obj)
-	(obj.type.draw or draw_obj_sprite)(obj)
-end
-
-function draw_obj_sprite(obj)
-	spr(obj.spr,obj.x,obj.y,1,1,obj.flip.x,obj.flip.y)
-end
-
-function draw_time(x,y)
-	rectfill(x,y,x+32,y+6,0)
-	?two_digit_str(minutes\60)..":"..two_digit_str(minutes%60)..":"..two_digit_str(seconds),x+1,y+1,7
-end
-
-function draw_ui()
-	rectfill(24,58,104,70,0)
-	local title=lvl_title or lvl_id.."00 m"
-	?title,64-#title*2,62,7
-	draw_time(4,4)
-end
-
-function two_digit_str(x)
-	return x<10 and "0"..x or x
-end
-
+-->8
 -- [helper functions]
+
+function psfx(num)
+	if sfx_timer<=0 then
+		sfx(num)
+	end
+end
 
 function round(x)
 	return flr(x+0.5)
@@ -1251,6 +1229,10 @@ end
 
 function sign(v)
 	return v~=0 and sgn(v) or 0
+end
+
+function two_digit_str(x)
+	return x<10 and "0"..x or x
 end
 
 function tile_at(x,y)
@@ -1269,9 +1251,8 @@ function spikes_at(x1,y1,x2,y2,xspd,yspd)
 		end
 	end
 end
-
 -->8
---[map metadata]
+-- [metadata]
 
 --@begin
 --level table
@@ -1297,12 +1278,28 @@ music_switches={
 
 --@end
 
---replace mapdata with hex
-function replace_mapdata(x,y,w,h,data)
-	for i=1,#data,2 do
-		mset(x+i\2%w,y+i\2\w,"0x"..sub(data,i,i+1))
-	end
-end
+--tiles stack
+--assigned objects will spawn from tiles set here
+tiles={}
+foreach(split([[
+1,player_spawn
+8,key
+11,platform
+12,platform
+18,spring
+20,chest
+22,balloon
+23,fall_floor
+26,fruit
+45,fly_fruit
+64,fake_wall
+86,message
+96,big_chest
+118,flag
+]],"\n"),function(t)
+ local tile,obj=unpack(split(t))
+ tiles[tile]=_ENV[obj]
+end)
 
 --[[
 
