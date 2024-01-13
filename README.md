@@ -1,15 +1,17 @@
 # Evercore
-A modified version of [Smalleste](https://github.com/CelesteClassic/smalleste) built for modding.
+A fork of [Smalleste](https://github.com/CelesteClassic/smalleste) with additional features for mod developers.
 
 ## Features
 
   * Large / scrolling level support
   * Level table system and mapdata string loading
   * Moving solid / semisolid object system
+  * Prebuilt horizontal springs and jumpthroughs
   * Object draw layering
   * Support for multiple berries per level
   * Tons of free tokens
   * Lots of free sprite space
+  * Backwards compatible with vanilla levels
 
 ## Info
 
@@ -54,8 +56,9 @@ The default Evercore cart hex loads Summit if you want to see a better example o
 #### Globals
 
   * levels - A table containing the coordinates of every level that can be loaded
-  * mapdata - A table containing the mapdata strings to be loaded by specific levels
-
+  * mapdata - A table containing mapdata strings to be loaded by the indexed level
+  * music_switches - A table containing music ids to play upon loading the indexed level
+  
   * lvl_id - The table index of the currently loaded level
 
   * lvl_x - The X position of the currently loaded level, in tiles
