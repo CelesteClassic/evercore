@@ -195,7 +195,7 @@ function _draw()
 		?"noel berry",46,102,5
 
 		-- particles
-			foreach(particles,draw_particle)
+		foreach(particles,draw_particle)
 
 		return
 	end
@@ -222,8 +222,8 @@ function _draw()
 	map(lvl_x,lvl_y,0,0,lvl_w,lvl_h,4)
 	
 	--set draw layering
-	--positive layers draw later
-	--layer 0 draws behind player, above terrain
+	--positive layers draw after player
+	--layer 0 draws before player, after terrain
 	--negative layers draw before terrain
 	local pre_draw,post_draw={},{}
 	foreach(objects,function(obj)
@@ -275,16 +275,16 @@ end
 
 function draw_particle(p)
 	p.x+=p.spd-cam_spdx
- p.y+=sin(p.off)-cam_spdy
- p.off+=min(0.05,p.spd/32)
- rectfill(p.x+draw_x,p.y%128+draw_y,p.x+p.s+draw_x,p.y%128+p.s+draw_y,p.c)
- if p.x>132 then
-	 p.x=-4
-	 p.y=rnd"128"
- elseif p.x<-4 then
-	 p.x=128
-	 p.y=rnd"128"
- end
+	p.y+=sin(p.off)-cam_spdy
+	p.off+=min(0.05,p.spd/32)
+	rectfill(p.x+draw_x,p.y%128+draw_y,p.x+p.s+draw_x,p.y%128+p.s+draw_y,p.c)
+	if p.x>132 then
+		p.x=-4
+		p.y=rnd"128"
+	elseif p.x<-4 then
+		p.x=128
+		p.y=rnd"128"
+	end
 end
 
 function draw_time(x,y)
@@ -668,7 +668,7 @@ function break_fall_floor(obj)
 	end
 end
 
-function	set_springs(obj,state)
+function set_springs(obj,state)
 	obj.hitbox=rectangle(-2,-2,12,8)
 	local springs=obj.check_all(spring,0,0)
 	foreach(springs,function(s) s.show=state end)
@@ -1056,7 +1056,7 @@ function init_object(type,x,y,tile)
 				return true
 			end
 		end
-		return oy>0 and not obj.is_flag(ox,0,3) and obj.is_flag(ox,oy,3) or  -- jumpthrough or
+		return oy>0 and not obj.is_flag(ox,0,3) and obj.is_flag(ox,oy,3) or -- jumpthrough or
 		obj.is_flag(ox,oy,0) -- solid terrain
 	end
 
