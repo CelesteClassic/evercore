@@ -1333,7 +1333,7 @@ and can be safely removed!
 function get_mapdata(x,y,w,h)
 	local reserve=""
 	for i=0,w*h-1 do
-		reserve..=num2hex(mget(i%w,i\w))
+		reserve..=num2hex(mget(x+i%w,y+i\w))
 	end
 	printh(reserve,"@clip")
 end
