@@ -1013,9 +1013,9 @@ flag={
 			camera()
 			rectfill(32,2,96,31,0)
 			spr(26,55,6)
-			?"x"..fruit_count,64,9,7
+			?"x"..two_digit_str(fruit_count),64,9,7
 			draw_time(43,16)
-			?"deaths:"..deaths,48,24,7
+			?"deaths:"..two_digit_str(deaths),48,24,7
 			camera(draw_x,draw_y)
 		end
 	end
