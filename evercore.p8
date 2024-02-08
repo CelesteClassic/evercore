@@ -29,7 +29,7 @@ end
 
 function begin_game()
 	max_djump=1
-	deaths,frames,seconds,minutes,music_timer,time_ticking,fruit_count,bg_col,cloud_col=0,0,0,0,0,true,0,0,1
+	deaths,frames,seconds_f,minutes,music_timer,time_ticking,fruit_count,bg_col,cloud_col=0,0,0,0,0,true,0,0,1
 	music(0,0,7)
 	load_level(1)
 end
@@ -109,9 +109,9 @@ end
 function _update()
 	frames+=1
 	if time_ticking then
-		seconds+=frames\30
-		minutes+=seconds\60
-		seconds%=60
+		seconds_f+=1
+		minutes+=seconds_f\1800
+		seconds_f%=1800
 	end
 	frames%=30
 
@@ -289,8 +289,8 @@ function draw_particle(p)
 end
 
 function draw_time(x,y)
-	rectfill(x,y,x+32,y+6,0)
-	?two_digit_str(minutes\60)..":"..two_digit_str(minutes%60)..":"..two_digit_str(seconds),x+1,y+1,7
+	rectfill(x,y,x+44,y+6,0)
+	?two_digit_str(minutes\60)..":"..two_digit_str(minutes%60)..":"..two_digit_str(seconds_f\30)..":"..two_digit_str(round(seconds_f%30*100/30)),x+1,y+1,7
 end
 
 function draw_ui()
@@ -1014,7 +1014,7 @@ flag={
 			rectfill(32,2,96,31,0)
 			spr(26,55,6)
 			?"x"..fruit_count,64,9,7
-			draw_time(49,16)
+			draw_time(43,16)
 			?"deaths:"..deaths,48,24,7
 			camera(draw_x,draw_y)
 		end
